@@ -1,12 +1,14 @@
 class PostfixLogParser
+  MSG = ['NOQUEUE']
   def initialize(file, options ={})
     $options = options
     load(file)
     p test()
+    p entries
   end
 
   def test
-    ketqua = @data.map {|k,v|
+    ketqua = @messages.map {|k,v|
       check(v)
     }
 
@@ -18,7 +20,11 @@ class PostfixLogParser
   end
 
   def data
-    @data
+    @messages
+  end
+
+  def entries
+    @entries    
   end
 
   private
@@ -50,13 +56,14 @@ class PostfixLogParser
   end
 
   def load(file)
-    @data = {}
+    @messages = {}
+    @entries = []
     File.open(file).each_with_index do |line, index|
       id = line[/(?<=\]:\s)[A-Z0-9]+(?=:)/]
-      next if id == 'NOQUEUE'
       
-      if id.nil? 
-        # puts line
+      if id.nil? or MSG.include?(id)
+        @entries << line
+        next
       end
 
       if !id.nil? && line.include?('to=') && !line.include?('status=')
@@ -65,8 +72,8 @@ class PostfixLogParser
       end
 
       if id
-        @data[id] = [] if data[id].nil?
-        @data[id] << line
+        @messages[id] = [] if data[id].nil?
+        @messages[id] << line
       end
 
       # break if index > 100

@@ -40,3 +40,4 @@ gem 'spring',        group: :development
 
 gem 'execjs'
 gem 'therubyracer'
+gem 'thin'
