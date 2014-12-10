@@ -13,4 +13,5 @@
  *= require 'bootstrap/css/bootstrap.min.css'
  *= require_self
  *= require 'blog.css.scss'
+ *= require 'datatable/media/css/jquery.dataTables.min.css'
  */
