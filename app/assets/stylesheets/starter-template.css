@@ -1,0 +1,12 @@
+body {
+  padding-top: 50px;
+}
+.starter-template {
+  padding: 40px 15px;
+  text-align: center;
+}
+
+/* MY CUSTOM */
+.list-group-item {
+  padding: 4px 10px;
+}

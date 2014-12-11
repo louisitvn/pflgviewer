@@ -3,11 +3,53 @@ require 'parser'
 
 class Message < ActiveRecord::Base
   extend SqlHelper
+  has_many :recipients, :primary_key => :number, :foreign_key => :number
 
   def self.load(file)
     messages, recipients = PostfixLogParser.load('/tmp/postfix.log')
     Message.execute_db_update!(messages)
     Recipient.execute_db_update!(recipients)
+  end
+
+  def self.domain_by_volume_deferred(params)
+    sql = %Q{
+      SELECT rcpt.domain, count(rcpt.id) as volume
+      FROM messages msg
+      INNER JOIN recipients rcpt ON msg.number = rcpt.number
+      WHERE rcpt.status = 'deferred'
+      GROUP BY rcpt.domain
+      ORDER BY count(rcpt.id) DESC
+      LIMIT :limit OFFSET :offset
+    }
+
+    return self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
+  end
+
+  def self.domain_by_volume_sent(params)
+    sql = %Q{
+      SELECT rcpt.domain, count(rcpt.id) as volume
+      FROM messages msg
+      INNER JOIN recipients rcpt ON msg.number = rcpt.number
+      WHERE rcpt.status = 'sent'
+      GROUP BY rcpt.domain
+      ORDER BY count(rcpt.id) DESC
+      LIMIT :limit OFFSET :offset
+    }
+    return self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
+  end
+
+  def self.domain_by_volume_deferred(params)
+    sql = %Q{
+      SELECT rcpt.domain, count(rcpt.id) as volume
+      FROM messages msg
+      INNER JOIN recipients rcpt ON msg.number = rcpt.number
+      WHERE rcpt.status = 'deferred'
+      GROUP BY rcpt.domain
+      ORDER BY count(rcpt.id) DESC
+      LIMIT :limit OFFSET :offset
+    }
+
+    return self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
   end
 
   def self.search(args)

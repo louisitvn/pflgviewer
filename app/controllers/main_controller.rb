@@ -1,7 +1,10 @@
 class MainController < ApplicationController
   def index
     respond_to do |format|
-      format.html {}
+      format.html {
+        @dommain_by_volume_deferred = Message.domain_by_volume_deferred(limit: 10000, offset: 0)
+
+      }
       format.json {
         jdata = {entries: [], filteredRecords: 100}
         1.upto(100) do |i|
