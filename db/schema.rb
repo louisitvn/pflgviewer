@@ -25,4 +25,13 @@ ActiveRecord::Schema.define(version: 20141210020236) do
     t.datetime "updated_at"
   end
 
+  create_table "recipients", force: true do |t|
+    t.string   "number"
+    t.string   "recipient"
+    t.string   "domain"
+    t.string   "status"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
 end

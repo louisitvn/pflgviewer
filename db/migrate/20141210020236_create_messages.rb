@@ -1,4 +1,4 @@
-class CreateMessages < ActiveRecord::Migration
+class CreateDbSchema < ActiveRecord::Migration
   def change
     create_table :messages do |t|
       t.string :number
