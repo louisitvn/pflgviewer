@@ -1,7 +1,14 @@
-require 'sql_helper.rb'
+require 'sql_helper'
+require 'parser'
 
 class Message < ActiveRecord::Base
   extend SqlHelper
+
+  def self.load(file)
+    messages, recipients = PostfixLogParser.load('/tmp/postfix.log')
+    Message.execute_db_update!(messages)
+    Recipient.execute_db_update!(recipients)
+  end
 
   def self.search(args)
     # extract information from parameters

@@ -2,25 +2,7 @@ class PostfixLogParser
   NOQUEUE = 'NOQUEUE'
   LABELS = [ NOQUEUE ]
 
-  def initialize(file, options ={})
-    $options = options
-    load(file)
-  end
-
-  def test
-    ketqua = @messages.map {|k,v|
-      check(v)
-    }
-
-    sent = ketqua.select do |i|
-      !i[:recipients].select{|e| e[:status] == 'sent'}.empty?
-    end
-    
-    return sent.count
-  end
-
-  private
-  def load(file)
+  def self.load(file)
     messages = {}
     others = []
 
@@ -82,13 +64,16 @@ class PostfixLogParser
       end
     end
 
-    p messages_insert_queue
-    #p recipients_insert_queue
+    # p messages_insert_queue
+    # p recipients_insert_queue
+
+    return [messages_insert_queue, recipients_insert_queue]
   end
 
-  def extract_id(line)
+  def self.extract_id(line)
     line[/(?<=\]:\s)[A-Z0-9]+(?=:)/]
   end
 end
 
-ps = PostfixLogParser.new('/tmp/postfix.log')
+# a,b = PostfixLogParser.load('/tmp/postfix.log')
+
