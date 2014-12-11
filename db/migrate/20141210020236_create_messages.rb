@@ -8,5 +8,14 @@ class CreateMessages < ActiveRecord::Migration
 
       t.timestamps
     end
+
+    create_table :recipients do |t|
+      t.string :number
+      t.string :recipient
+      t.string :domain
+      t.string :status
+
+      t.timestamps
+    end
   end
 end

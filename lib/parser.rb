@@ -1,10 +1,10 @@
 class PostfixLogParser
-  MSG = ['NOQUEUE']
+  NOQUEUE = 'NOQUEUE'
+  LABELS = [ NOQUEUE ]
+
   def initialize(file, options ={})
     $options = options
     load(file)
-    p test()
-    p entries
   end
 
   def test
@@ -19,65 +19,75 @@ class PostfixLogParser
     return sent.count
   end
 
-  def data
-    @messages
-  end
-
-  def entries
-    @entries    
-  end
-
   private
-  def check(array)
-    # attrs = {type: 'rejected', from: nil, to: nil, send_domain: nil, receive_domain: nil}
-    attrs = {}
-
-    attrs[:from] = array.join(" ")[/(?<=from=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i]
-    attrs[:domain] = attrs[:from][/(?<=@).*/] if attrs[:from]
-    attrs[:recipients] = array.select { |line| 
-      line[/(?<=to=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i] 
-    }.map { |line|
-      { 
-        to: line[/(?<=to=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i],
-        status: line[/(?<=status=)[a-z0-9]+/],
-      }
-    }.map { |h|
-      h.merge(
-        domain: h[:to] ? h[:to][/(?<=@).*/] : nil
-      )
-    }
-
-    if attrs[:recipients].count > 1
-      #p attrs
-      #puts "---------------"
-    end
-    
-    return attrs
-  end
-
   def load(file)
-    @messages = {}
-    @entries = []
+    messages = {}
+    others = []
+
     File.open(file).each_with_index do |line, index|
-      id = line[/(?<=\]:\s)[A-Z0-9]+(?=:)/]
+      id = extract_id(line)
       
-      if id.nil? or MSG.include?(id)
-        @entries << line
-        next
+      # dòng nào không có ID thì ignore
+      # For example, just ignore the following
+      #   Dec 11 10:52:03 phoenix postfix/smtpd[30134]: disconnect from OURMAILDOMAIN.com
+      #   Dec 11 10:52:05 phoenix postfix/smtpd[30134]: connect from OURMAILDOMAIN.com
+      #   Dec 11 10:52:05 phoenix postfix/smtpd[30134]: disconnect from OURMAILDOMAIN.com
+      next if id.nil?
+      
+      # nếu entry có dạng: NOQUEUE: reject thì add tạm vào 1 array
+      # Sau này sẽ add vào 1 dòng message và 1 dòng recipient (rejected)
+      if LABELS.include?(id)
+        others << line
       end
 
-      if !id.nil? && line.include?('to=') && !line.include?('status=')
-        p line
-        raise
-      end
-
-      if id
-        @messages[id] = [] if data[id].nil?
-        @messages[id] << line
-      end
+      # trường hợp bình thường
+      messages[id] ||= []
+      messages[id] << line
 
       # break if index > 100
     end
+
+    # duyệt qua lần 2, add các dòng recipients tương ứng
+    messages_insert_queue = []
+    recipients_insert_queue = []
+    
+    messages.each do |number, lines|
+      msg = {}
+
+      msg[:sender] = lines.join(" ")[/(?<=from=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i]
+      msg[:domain] = msg[:sender] ? msg[:sender][/(?<=@).*/] : nil
+      msg[:number] = number
+      messages_insert_queue << msg
+      lines.each { |line|
+        rcpt = {}
+        rcpt[:recipient] = line[/(?<=to=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i]
+        rcpt[:status] = line[/(?<=status=)[a-z0-9]+/]
+        rcpt[:domain] = rcpt[:recipient][/(?<=@).*/] if rcpt[:recipient]
+        rcpt[:number] = msg[:number]
+
+        if rcpt[:recipient] and rcpt[:status]
+          recipients_insert_queue << rcpt
+        end
+      }
+    end
+    
+    # Others: line with no message ID
+    others.each do |line|
+      id = extract_id(line)
+      if id == NOQUEUE
+        # extract from, to, reject
+      else
+        p line
+        raise
+      end
+    end
+
+    p messages_insert_queue
+    #p recipients_insert_queue
+  end
+
+  def extract_id(line)
+    line[/(?<=\]:\s)[A-Z0-9]+(?=:)/]
   end
 end
 
