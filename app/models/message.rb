@@ -6,7 +6,7 @@ class Message < ActiveRecord::Base
   has_many :recipients, :primary_key => :number, :foreign_key => :number
 
   def self.load(file)
-    messages, recipients = PostfixLogParser.load(File.join(Rails.root), 'postfix.log')
+    messages, recipients = PostfixLogParser.load(File.join(Rails.root, 'postfix.log'))
     Message.execute_db_update!(messages)
     Recipient.execute_db_update!(recipients)
   end

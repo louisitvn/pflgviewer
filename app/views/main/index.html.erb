@@ -67,7 +67,7 @@
             <% @dommain_by_deferred.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= number_to_percentage r.percentage, precision: 2 %></span>
-                <%= r.domain %>
+                <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
               </li>
             <% } %>
             
@@ -87,7 +87,7 @@
             <% @dommain_by_bounced.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= number_to_percentage r.percentage, precision: 2 %></span>
-                <%= r.domain %>
+                <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
               </li>
             <% } %>
             
@@ -108,7 +108,7 @@
             <% @dommain_by_rejected.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= number_to_percentage r.percentage, precision: 2 %></span>
-                <%= r.domain %>
+                <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
               </li>
             <% } %>
             
@@ -131,7 +131,7 @@
             <% @dommain_by_sent.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= r.volume %></span>
-                <%= r.domain %>
+                <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
               </li>
             <% } %>
             
@@ -151,7 +151,7 @@
             <% @dommain_by_deferred.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= r.volume %></span>
-                <%= r.domain %>
+                <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
               </li>
             <% } %>
             
@@ -171,7 +171,7 @@
             <% @dommain_by_bounced.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= r.volume %></span>
-                <%= r.domain %>
+                <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
               </li>
             <% } %>
             
@@ -191,7 +191,7 @@
             <% @dommain_by_rejected.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= r.volume %></span>
-                <%= r.domain %>
+                <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
               </li>
             <% } %>
             
