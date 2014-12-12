@@ -2,7 +2,15 @@ class MainController < ApplicationController
   def index
     respond_to do |format|
       format.html {
-        @dommain_by_volume_deferred = Message.domain_by_volume_deferred(limit: 10000, offset: 0)
+        # for showing to view
+        @from = params[:from]
+        @to = params[:to]
+        
+        # retrieving data
+        @dommain_by_deferred = Message.domain_by_deferred(params)
+        @dommain_by_bounced = Message.domain_by_bounced(params)
+        @dommain_by_sent = Message.domain_by_sent(params)
+        @dommain_by_rejected = Message.domain_by_rejected(params)
 
       }
       format.json {

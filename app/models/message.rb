@@ -11,12 +11,39 @@ class Message < ActiveRecord::Base
     Recipient.execute_db_update!(recipients)
   end
 
-  def self.domain_by_volume_deferred(params)
+  # why bother joining messages table, the recipients alone is not enough?
+  def self.domain_by_deferred(params)
     sql = %Q{
-      SELECT rcpt.domain, count(rcpt.id) as volume
-      FROM messages msg
-      INNER JOIN recipients rcpt ON msg.number = rcpt.number
-      WHERE rcpt.status = 'deferred'
+      SELECT rcpt.domain, count(rcpt.id) as volume, round(count(*)::numeric * 100 / (select count(*) from recipients), 2) as percentage
+      FROM recipients rcpt
+      WHERE rcpt.status = 'deferred' AND #{conditions_from_params(params)}
+      GROUP BY rcpt.domain
+      ORDER BY count(rcpt.id) DESC
+      LIMIT :limit OFFSET :offset
+    }
+
+    a =  self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
+    p a.count, "COOOOOOOOOOOOOOOOOOOO"
+    return a
+  end
+
+  def self.domain_by_sent(params)
+    sql = %Q{
+      SELECT rcpt.domain, count(rcpt.id) as volume, round(count(*)::numeric * 100 / (select count(*) from recipients), 2) as percentage
+      FROM recipients rcpt
+      WHERE rcpt.status = 'sent' AND #{conditions_from_params(params)}
+      GROUP BY rcpt.domain
+      ORDER BY count(rcpt.id) DESC
+      LIMIT :limit OFFSET :offset
+    }
+    return self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
+  end
+
+  def self.domain_by_bounced(params)
+    sql = %Q{
+      SELECT rcpt.domain, count(rcpt.id) as volume, round(count(*)::numeric * 100 / (select count(*) from recipients), 2) as percentage
+      FROM recipients rcpt
+      WHERE rcpt.status = 'bounced' AND #{conditions_from_params(params)}
       GROUP BY rcpt.domain
       ORDER BY count(rcpt.id) DESC
       LIMIT :limit OFFSET :offset
@@ -25,25 +52,11 @@ class Message < ActiveRecord::Base
     return self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
   end
 
-  def self.domain_by_volume_sent(params)
+  def self.domain_by_rejected(params)
     sql = %Q{
-      SELECT rcpt.domain, count(rcpt.id) as volume
-      FROM messages msg
-      INNER JOIN recipients rcpt ON msg.number = rcpt.number
-      WHERE rcpt.status = 'sent'
-      GROUP BY rcpt.domain
-      ORDER BY count(rcpt.id) DESC
-      LIMIT :limit OFFSET :offset
-    }
-    return self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
-  end
-
-  def self.domain_by_volume_deferred(params)
-    sql = %Q{
-      SELECT rcpt.domain, count(rcpt.id) as volume
-      FROM messages msg
-      INNER JOIN recipients rcpt ON msg.number = rcpt.number
-      WHERE rcpt.status = 'deferred'
+      SELECT rcpt.domain, count(rcpt.id) as volume, round(count(*)::numeric * 100 / (select count(*) from recipients), 2) as percentage
+      FROM recipients rcpt
+      WHERE rcpt.status = 'rejected' AND #{conditions_from_params(params)}
       GROUP BY rcpt.domain
       ORDER BY count(rcpt.id) DESC
       LIMIT :limit OFFSET :offset
@@ -88,5 +101,28 @@ class Message < ActiveRecord::Base
       recordsFiltered: total,
       search: _search
     }
+  end
+
+  private
+  def self.conditions_from_params(params)
+    # @note FROM/TO are in the date format of yyyy/mm/dd
+    
+    params = params.symbolize_keys
+    conn = self.connection
+
+    if params[:from]
+      from = DateTime.parse(params[:from])
+      
+      if params[:to]
+        to = DateTime.parse(params[:to]) + 1.days
+        conditions = "datetime >= #{conn.quote(from)} AND datetime < #{conn.quote(to)}"
+      else
+        conditions = "datetime >= #{conn.quote(from)}"
+      end
+    else
+      conditions = []
+    end
+    p "CONDITIONS***********", conditions
+    return conditions
   end
 end

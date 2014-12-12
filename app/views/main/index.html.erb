@@ -26,7 +26,7 @@
           <div class='col-sm-3'>
             <div class="form-group">
               <div class='input-group date'>
-                <input type='text' class="form-control"  id='datetimepicker1'/>
+                <input type='text' class="form-control"  id='datetimepicker1' value="<%= @from %>"/>
                 <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
               </div>
             </div>
@@ -34,7 +34,7 @@
           <div class='col-sm-3'>
             <div class="form-group">
               <div class='input-group date'>
-                <input type='text' class="form-control"  id='datetimepicker2'/>
+                <input type='text' class="form-control"  id='datetimepicker2' value="<%= @to %>"/>
                 <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
               </div>
             </div>
@@ -48,14 +48,14 @@
         </div>
 
         <div class="row">
-          <div class="col-sm-6">
+          <div class="col-sm-8">
             <div class="btn-group" role="group" aria-label="...">
-              <button type="button" class="btn btn-default">Today</button>
-              <button type="button" class="btn btn-default">Yesterday</button>
-              <button type="button" class="btn btn-default">This Week</button>
-              <button type="button" class="btn btn-default">Last Week</button>
-              <button type="button" class="btn btn-default">This Month</button>
-              <button type="button" class="btn btn-default">Last Month</button>
+              <button id="btnToday" type="button" class="btn btn-default">Today</button>
+              <button id="btnYesterday" type="button" class="btn btn-default">Yesterday</button>
+              <button id="btnThisWeek" type="button" class="btn btn-default">This Week</button>
+              <button id="btnLastWeek" type="button" class="btn btn-default">Last Week</button>
+              <button id="btnThisMonth" type="button" class="btn btn-default">This Month</button>
+              <button id="btnLastMonth" type="button" class="btn btn-default">Last Month</button>
             </div>
           </div>
         </div>
@@ -66,22 +66,18 @@
             <li class="list-group-item active">
               Domain by % delivered
             </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
+            <% @dommain_by_sent.each { |r| %>
+              <li class="list-group-item">
+                <span class="badge"><%= number_to_percentage r.percentage, precision: 2 %></span>
+                <%= r.domain %>
+              </li>
+            <% } %>
+            
+            <% 1.upto(5 - @dommain_by_sent.count) do |i| %>
+              <li class="list-group-item">
+                ---
+              </li>
+            <% end %>
           </ul>
         </div>
 
@@ -90,22 +86,18 @@
             <li class="list-group-item active">
               Domain by % deferred
             </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
+            <% @dommain_by_deferred.each { |r| %>
+              <li class="list-group-item">
+                <span class="badge"><%= number_to_percentage r.percentage, precision: 2 %></span>
+                <%= r.domain %>
+              </li>
+            <% } %>
+            
+            <% 1.upto(5 - @dommain_by_deferred.count) do |i| %>
+              <li class="list-group-item">
+                ---
+              </li>
+            <% end %>
           </ul>
         </div>
 
@@ -114,22 +106,19 @@
             <li class="list-group-item active">
               Domain by % bounced
             </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
+            <% @dommain_by_bounced.each { |r| %>
+              <li class="list-group-item">
+                <span class="badge"><%= number_to_percentage r.percentage, precision: 2 %></span>
+                <%= r.domain %>
+              </li>
+            <% } %>
+            
+            <% 1.upto(5 - @dommain_by_bounced.count) do |i| %>
+              <li class="list-group-item">
+                ---
+              </li>
+            <% end %>
+          </ul>
           </ul>
         </div>
 
@@ -138,22 +127,18 @@
             <li class="list-group-item active">
               Domain by % rejected
             </li>
-            <li class="list-group-item">
-              <span class="badge">14%</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
+            <% @dommain_by_rejected.each { |r| %>
+              <li class="list-group-item">
+                <span class="badge"><%= number_to_percentage r.percentage, precision: 2 %></span>
+                <%= r.domain %>
+              </li>
+            <% } %>
+            
+            <% 1.upto(5 - @dommain_by_rejected.count) do |i| %>
+              <li class="list-group-item">
+                ---
+              </li>
+            <% end %>
           </ul>
         </div>
       </div>
@@ -165,23 +150,18 @@
               Domain by volume delivered
             </li>
 
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
+            <% @dommain_by_sent.each { |r| %>
+              <li class="list-group-item">
+                <span class="badge"><%= r.volume %></span>
+                <%= r.domain %>
+              </li>
+            <% } %>
             
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
+            <% 1.upto(5 - @dommain_by_sent.count) do |i| %>
+              <li class="list-group-item">
+                ---
+              </li>
+            <% end %>
           </ul>
         </div>
 
@@ -190,25 +170,18 @@
             <li class="list-group-item active">
               Domain by volume deferred
             </li>
-            <% @dommain_by_volume_deferred.each { |r| %>
+            <% @dommain_by_deferred.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= r.volume %></span>
                 <%= r.domain %>
               </li>
             <% } %>
             
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
+            <% 1.upto(5 - @dommain_by_deferred.count) do |i| %>
+              <li class="list-group-item">
+                ---
+              </li>
+            <% end %>
           </ul>
         </div>
 
@@ -217,22 +190,18 @@
             <li class="list-group-item active">
               Domain by volume bounced
             </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
+            <% @dommain_by_bounced.each { |r| %>
+              <li class="list-group-item">
+                <span class="badge"><%= r.volume %></span>
+                <%= r.domain %>
+              </li>
+            <% } %>
+            
+            <% 1.upto(5 - @dommain_by_bounced.count) do |i| %>
+              <li class="list-group-item">
+                ---
+              </li>
+            <% end %>
           </ul>
         </div>
 
@@ -241,22 +210,18 @@
             <li class="list-group-item active">
               Domain by volume rejected
             </li>
-            <li class="list-group-item">
-              <span class="badge">14%</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
-            <li class="list-group-item">
-              <span class="badge">14</span>
-              Cras justo odio
-            </li>
+            <% @dommain_by_rejected.each { |r| %>
+              <li class="list-group-item">
+                <span class="badge"><%= r.volume %></span>
+                <%= r.domain %>
+              </li>
+            <% } %>
+            
+            <% 1.upto(5 - @dommain_by_rejected.count) do |i| %>
+              <li class="list-group-item">
+                ---
+              </li>
+            <% end %>
           </ul>
         </div>
       </div>
@@ -300,11 +265,99 @@
 <script>
   // Global
   var datatable;
+  var MainIndex = {
+    LIMIT: '5',
+    OFFSET: '0',
+    reload: function(params) {
+      params.limit = this.LIMIT;
+      params.offset = this.OFFSET;
+      window.location.href = window.location.pathname + '?' + $.param(params);
+    }
+  }
 
 	jQuery(document).ready(function() {
     // datepicker
     $('#datetimepicker1').datepicker();
     $('#datetimepicker2').datepicker();
+
+    // bind event
+    $( "#btnToday" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      var params = {
+        from: moment().format('YYYY/MM/DD'),
+        to: moment().format('YYYY/MM/DD')
+      };
+
+      $('#datetimepicker1').val(params.from);
+      $('#datetimepicker2').val(params.to);
+
+      MainIndex.reload(params);
+    });
+
+    $( "#btnYesterday" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      var params = {
+        from: moment().subtract(1, "days").format('YYYY/MM/DD'),
+        to: moment().subtract(1, "days").format('YYYY/MM/DD')
+      };
+
+      $('#datetimepicker1').val(params.from);
+      $('#datetimepicker2').val(params.to);
+
+      MainIndex.reload(params);
+    });
+
+    $( "#btnThisWeek" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      var params = {
+        from: moment().startOf('week').format('YYYY/MM/DD'),
+        to: moment().endOf('week').format('YYYY/MM/DD'),
+      };
+
+      $('#datetimepicker1').val(params.from);
+      $('#datetimepicker2').val(params.to);
+
+      MainIndex.reload(params);
+    });
+
+    $( "#btnLastWeek" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      var params = {
+        from: moment().subtract(7, "days").startOf('week').format('YYYY/MM/DD'),
+        to: moment().subtract(7, "days").endOf('week').format('YYYY/MM/DD'),
+      };
+
+      $('#datetimepicker1').val(params.from);
+      $('#datetimepicker2').val(params.to);
+
+      MainIndex.reload(params);
+    });
+
+    $( "#btnThisMonth" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      var params = {
+        from: moment().startOf('month').format('YYYY/MM/DD'),
+        to: moment().endOf('month').format('YYYY/MM/DD'),
+      };
+
+      $('#datetimepicker1').val(params.from);
+      $('#datetimepicker2').val(params.to);
+
+      MainIndex.reload(params);
+    });
+
+    $( "#btnLastMonth" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      var params = {
+        from: moment().subtract(1, "months").startOf('month').format('YYYY/MM/DD'),
+        to: moment().subtract(1, "months").endOf('month').format('YYYY/MM/DD'),
+      };
+
+      $('#datetimepicker1').val(params.from);
+      $('#datetimepicker2').val(params.to);
+
+      MainIndex.reload(params);
+    });
 
     // Init DataTable
     datatable = $('#main-table').dataTable( {

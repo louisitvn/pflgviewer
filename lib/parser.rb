@@ -1,3 +1,4 @@
+require 'date'
 class PostfixLogParser
   NOQUEUE = 'NOQUEUE'
   LABELS = [ NOQUEUE ]
@@ -36,16 +37,17 @@ class PostfixLogParser
     messages.each do |number, lines|
       msg = {}
 
-      msg[:sender] = lines.join(" ")[/(?<=from=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i]
+      msg[:sender] = lines.join(" ")[/(?<=from=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i].clean_email
       msg[:domain] = msg[:sender] ? msg[:sender][/(?<=@).*/] : nil
       msg[:number] = number
       messages_insert_queue << msg
       lines.each { |line|
         rcpt = {}
-        rcpt[:recipient] = line[/(?<=to=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i]
+        rcpt[:recipient] = line[/(?<=to=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i].clean_email
         rcpt[:status] = line[/(?<=status=)[a-z0-9]+/]
         rcpt[:domain] = rcpt[:recipient][/(?<=@).*/] if rcpt[:recipient]
         rcpt[:number] = msg[:number]
+        rcpt[:datetime] = DateTime.parse(line[0..14])
 
         if rcpt[:recipient] and rcpt[:status]
           recipients_insert_queue << rcpt

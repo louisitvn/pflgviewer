@@ -5,6 +5,7 @@ class CreateDbSchema < ActiveRecord::Migration
       t.string :sender
       t.string :domain
       t.integer :size
+      t.datetime :datetime
 
       t.timestamps
     end
@@ -14,6 +15,7 @@ class CreateDbSchema < ActiveRecord::Migration
       t.string :recipient
       t.string :domain
       t.string :status
+      t.datetime :datetime
 
       t.timestamps
     end

@@ -16,4 +16,5 @@
 //= require 'bootstrap/js/bootstrap.min.js'
 //= require 'jquery-ui'
 //= require 'datatable/media/js/jquery.dataTables.min.js'
+//= require 'moment-with-locales.min.js'
 //= require_tree .
