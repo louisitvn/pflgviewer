@@ -1,25 +1,3 @@
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-home" aria-hidden="true"></span></a>
-        </div>
-        <div id="navbar" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li><a href="#">Delivered</a></li>
-            <li><a href="#about">Deferred</a></li>
-            <li><a href="#contact">Bounced</a></li>
-            <li><a href="#contact">Rejected</a></li>
-          </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </nav>
-
     <div class="container">
       <div class="page-header">
         <div class="row">
@@ -64,12 +42,12 @@
         <div class="col-md-3">
           <ul class="list-group">
             <li class="list-group-item active">
-              Domain by % delivered
+              <%= link_to 'Domain by % delivered', domains_by_status_path(:status => 'sent'), style: 'color: white' %>
             </li>
             <% @dommain_by_sent.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= number_to_percentage r.percentage, precision: 2 %></span>
-                <%= r.domain %>
+                <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
               </li>
             <% } %>
             
@@ -84,7 +62,7 @@
         <div class="col-md-3">
           <ul class="list-group">
             <li class="list-group-item active">
-              Domain by % deferred
+              <%= link_to 'Domain by % deferred', domains_by_status_path(:status => 'sent'), style: 'color: white' %>
             </li>
             <% @dommain_by_deferred.each { |r| %>
               <li class="list-group-item">
@@ -104,7 +82,7 @@
         <div class="col-md-3">
           <ul class="list-group">
             <li class="list-group-item active">
-              Domain by % bounced
+              <%= link_to 'Domain by % bounced', domains_by_status_path(:status => 'bounced'), style: 'color: white' %>
             </li>
             <% @dommain_by_bounced.each { |r| %>
               <li class="list-group-item">
@@ -125,7 +103,7 @@
         <div class="col-md-3">
           <ul class="list-group">
             <li class="list-group-item active">
-              Domain by % rejected
+              <%= link_to 'Domain by % rejected', domains_by_status_path(:status => 'rejected'), style: 'color: white' %>
             </li>
             <% @dommain_by_rejected.each { |r| %>
               <li class="list-group-item">
@@ -147,7 +125,7 @@
         <div class="col-md-3">
           <ul class="list-group">
             <li class="list-group-item active">
-              Domain by volume delivered
+              <%= link_to 'Domain by volume delivered', domains_by_status_path(:status => 'sent'), style: 'color: white' %>
             </li>
 
             <% @dommain_by_sent.each { |r| %>
@@ -168,7 +146,7 @@
         <div class="col-md-3">
           <ul class="list-group">
             <li class="list-group-item active">
-              Domain by volume deferred
+              <%= link_to 'Domain by volume deferred', domains_by_status_path(:status => 'deferred'), style: 'color: white' %>
             </li>
             <% @dommain_by_deferred.each { |r| %>
               <li class="list-group-item">
@@ -188,7 +166,7 @@
         <div class="col-md-3">
           <ul class="list-group">
             <li class="list-group-item active">
-              Domain by volume bounced
+              <%= link_to 'Domain by volume bounced', domains_by_status_path(:status => 'bounced'), style: 'color: white' %>
             </li>
             <% @dommain_by_bounced.each { |r| %>
               <li class="list-group-item">
@@ -208,7 +186,7 @@
         <div class="col-md-3">
           <ul class="list-group">
             <li class="list-group-item active">
-              Domain by volume rejected
+              <%= link_to 'Domain by volume rejected', domains_by_status_path(:status => 'rejected'), style: 'color: white' %>
             </li>
             <% @dommain_by_rejected.each { |r| %>
               <li class="list-group-item">
@@ -223,48 +201,12 @@
               </li>
             <% end %>
           </ul>
-        </div>
-      </div>
-
-      <div class="page-header">
-        <h1>Statistics</h1>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="panel panel-default">
-            <!-- Default panel contents -->
-            <div class="panel-heading">Panel heading</div>
-            <div class="panel-body">
-              <p>Panel body text goes here</p>
-            </div>
-
-            <!-- Table -->
-            <table id="main-table" class="display table" cellspacing="0" width="100%">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Size</th>
-                  <th>Domain</th>
-                </tr>
-              </thead>
-
-              <tfoot>
-                <tr>
-                  <th>Name</th>
-                  <th>Position</th>
-                  <th>Office</th>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          
         </div>
       </div>
     </div>
   
 <script>
   // Global
-  var datatable;
   var MainIndex = {
     LIMIT: '5',
     OFFSET: '0',
@@ -383,40 +325,5 @@
     $( "#btnShowDatetimePicker2" ).on( "click", function() {
       $('#datetimepicker2').datepicker( 'show' );
     });
-
-    // Init DataTable
-    datatable = $('#main-table').dataTable( {
-      serverSide: true,
-      processing: true,
-      retrieve: true,
-      dom: 'rtip',
-      deferLoading: true,
-      order: [[ 1, "asc" ]],
-      pageLength: 20,
-      ajax: {
-        url: '/main/index.json',
-        dataSrc: 'entries',
-        data: function(params) {
-          //params.filter = VyrianSearchPage.filter;
-        }
-      },
-      columns: [
-        { 
-          "name": "ID",
-          "data": function(row, b, c, d){
-            return row.id
-          }
-        },
-        { "name": "domain", "data": "domain" },
-        { "name": "size", "title": "Size",  "data": 'size' },
-      ],
-      
-      drawCallback: function( settings ) {
-        //
-      }
-    } );
-
-    // load
-    datatable.DataTable().draw();
 	});
 </script>

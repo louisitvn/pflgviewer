@@ -6,7 +6,7 @@ class Message < ActiveRecord::Base
   has_many :recipients, :primary_key => :number, :foreign_key => :number
 
   def self.load(file)
-    messages, recipients = PostfixLogParser.load('/tmp/postfix.log')
+    messages, recipients = PostfixLogParser.load(File.join(Rails.root), 'postfix.log')
     Message.execute_db_update!(messages)
     Recipient.execute_db_update!(recipients)
   end
@@ -22,9 +22,19 @@ class Message < ActiveRecord::Base
       LIMIT :limit OFFSET :offset
     }
 
-    a =  self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
-    p a.count, "COOOOOOOOOOOOOOOOOOOO"
-    return a
+    count_sql = %Q{
+      SELECT COUNT(*) FROM
+      ( 
+        SELECT rcpt.domain
+        FROM recipients rcpt
+        WHERE rcpt.status = 'deferred' AND #{conditions_from_params(params)}
+        GROUP BY rcpt.domain
+      ) tmp
+    }
+
+    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
+    count = self.count_by_sql(count_sql)
+    return data, count
   end
 
   def self.domain_by_sent(params)
@@ -36,7 +46,20 @@ class Message < ActiveRecord::Base
       ORDER BY count(rcpt.id) DESC
       LIMIT :limit OFFSET :offset
     }
-    return self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
+
+    count_sql = %Q{
+      SELECT COUNT(*) FROM
+      ( 
+        SELECT rcpt.domain
+        FROM recipients rcpt
+        WHERE rcpt.status = 'sent' AND #{conditions_from_params(params)}
+        GROUP BY rcpt.domain
+      ) tmp
+    }
+    
+    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
+    count = self.count_by_sql(count_sql)
+    return data, count
   end
 
   def self.domain_by_bounced(params)
@@ -49,7 +72,19 @@ class Message < ActiveRecord::Base
       LIMIT :limit OFFSET :offset
     }
 
-    return self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
+    count_sql = %Q{
+      SELECT COUNT(*) FROM
+      ( 
+        SELECT rcpt.domain
+        FROM recipients rcpt
+        WHERE rcpt.status = 'bounced' AND #{conditions_from_params(params)}
+        GROUP BY rcpt.domain
+      ) tmp
+    }
+
+    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
+    count = self.count_by_sql(count_sql)
+    return data, count
   end
 
   def self.domain_by_rejected(params)
@@ -62,7 +97,37 @@ class Message < ActiveRecord::Base
       LIMIT :limit OFFSET :offset
     }
 
-    return self.find_by_sql([sql, limit: params[:limit], offset: params[:offset] ])
+    count_sql = %Q{
+      SELECT COUNT(*) FROM
+      ( 
+        SELECT rcpt.domain
+        FROM recipients rcpt
+        WHERE rcpt.status = 'rejected' AND #{conditions_from_params(params)}
+        GROUP BY rcpt.domain
+      ) tmp
+    }
+
+    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
+    count = self.count_by_sql(count_sql)
+    return data, count
+  end
+
+  def self.users_by_domain(domain, params = {})
+    sql = %Q{
+      SELECT recipient,
+             SUM(case status when 'rejected' then 1 else 0 end) AS rejected,
+             SUM(case status when 'sent' then 1 else 0 end) AS sent,
+             SUM(case status when 'deferred' then 1 else 0 end) AS deferred,
+             SUM(case status when 'bounced' then 1 else 0 end) AS bounced
+      FROM recipients 
+      GROUP BY recipient
+      LIMIT :limit OFFSET :offset
+    }
+
+    count_sql = 'SELECT COUNT(*) FROM (SELECT DISTINCT recipient FROM recipients) tmp'
+    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
+    count = self.count_by_sql(count_sql)
+    return data, count
   end
 
   def self.search(args)
@@ -75,9 +140,6 @@ class Message < ActiveRecord::Base
     _sort_order = args[:order]["0"][:dir]
     _sort_by = "#{_sort_field} #{_sort_order}" unless _sort_field.empty?
     
-
-    p _manufacturers, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-
     # count the total
     total_items = self.where(['part_number ILIKE :search OR manufacturer_name ILIKE :search', { search: "%#{_search}%" }])
     # filter by manufacturers
@@ -104,6 +166,10 @@ class Message < ActiveRecord::Base
   end
 
   private
+  def self.to_count_sql(sql)
+    sql.strip.gsub(/SELECT.*(?=FROM)/m, "SELECT COUNT(*) ").gsub(/LIMIT.*/m, "").strip
+  end
+
   def self.conditions_from_params(params)
     # @note FROM/TO are in the date format of yyyy/mm/dd
     
@@ -120,7 +186,7 @@ class Message < ActiveRecord::Base
         conditions = "datetime >= #{conn.quote(from)}"
       end
     else
-      conditions = []
+      conditions = "TRUE"
     end
     p "CONDITIONS***********", conditions
     return conditions

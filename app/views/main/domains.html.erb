@@ -1,0 +1,65 @@
+    <div class="container">
+      <div class="page-header">
+        <h1>Statistics: <%= @status %></h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-default">
+            <!-- Default panel contents -->
+            <div class="panel-heading">Domains by <%= @status %></div>
+            <div class="panel-body">
+              <!-- Table -->
+              <table id="main-table" class="display table" cellspacing="0" width="100%"></table>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  
+<script>
+  // Global
+  var datatable;
+
+	jQuery(document).ready(function() {
+    // Init DataTable
+    datatable = $('#main-table').dataTable( {
+      serverSide: true,
+      processing: true,
+      retrieve: true,
+      dom: 'rtip',
+      deferLoading: true,
+      order: [[ 1, "asc" ]],
+      pageLength: 20,
+      ajax: {
+        url: '/main/domains/<%= @status%>.json',
+        dataSrc: 'data',
+        data: function(params) {
+          //params.filter = VyrianSearchPage.filter;
+        }
+      },
+      columns: [
+        { 
+          "name": "domain",
+          "data": function(row, b, c, d){
+            return row.domain
+          }
+        },
+        { "name": "percentage", "title": "%", "data": "percentage" },
+        { "name": "volume", "title": "Volume",  "data": "volume" },
+        { "name": "last_change", "title": "Last Change",  "data": "volume" },
+        { "name": "view", "title": "",  "data":  function(row, b, c, d) {
+            return '<a href="#">View</a> <a href="#">Export</a>';
+          } 
+        }
+      ],
+      
+      drawCallback: function( settings ) {
+        //
+      }
+    } );
+
+    // load
+    datatable.DataTable().draw();
+	});
+</script>
