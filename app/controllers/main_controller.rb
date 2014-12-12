@@ -28,7 +28,7 @@ class MainController < ApplicationController
           data, count = Message.domain_by_bounced(params)
         end
 
-        render json: { data: data.as_json(only: [:domain, :percentage, :volume]), recordsFiltered: count}
+        render json: { data: data.as_json(only: [:domain, :percentage, :volume]), recordsFiltered: count, recordsTotal: count}
       }
     end
   end
@@ -40,7 +40,7 @@ class MainController < ApplicationController
       format.html {}
       format.json {
         data, count = Message.users_by_domain(@domain)
-        render json: { data: data.as_json(only: [:recipient, :rejected, :deferred, :sent, :bounced]), recordsFiltered: count}
+        render json: { data: data.as_json(only: [:recipient, :rejected, :deferred, :sent, :bounced]), recordsFiltered: count, recordsTotal: count}
       }
     end
   end

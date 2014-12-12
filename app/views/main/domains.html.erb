@@ -42,16 +42,12 @@
         { 
           "name": "domain",
           "data": function(row, b, c, d){
-            return row.domain
+            return '<a href="<%= users_by_domain_path(base64_domain: '')%>' + btoa(row.domain) + '">' + row.domain + '</a>';
           }
         },
         { "name": "percentage", "title": "%", "data": "percentage" },
         { "name": "volume", "title": "Volume",  "data": "volume" },
-        { "name": "last_change", "title": "Last Change",  "data": "volume" },
-        { "name": "view", "title": "",  "data":  function(row, b, c, d) {
-            return '<a href="#">View</a> <a href="#">Export</a>';
-          } 
-        }
+        { "name": "last_change", "title": "Last Change",  "data": "volume" }
       ],
       
       drawCallback: function( settings ) {
