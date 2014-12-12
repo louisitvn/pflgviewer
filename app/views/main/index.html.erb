@@ -27,7 +27,7 @@
             <div class="form-group">
               <div class='input-group date'>
                 <input type='text' class="form-control"  id='datetimepicker1' value="<%= @from %>"/>
-                <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                <span id="btnShowDatetimePicker1" class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
               </div>
             </div>
           </div>
@@ -35,14 +35,14 @@
             <div class="form-group">
               <div class='input-group date'>
                 <input type='text' class="form-control"  id='datetimepicker2' value="<%= @to %>"/>
-                <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                <span id="btnShowDatetimePicker2" class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
               </div>
             </div>
           </div>
 
           <div class="col-sm-6">
             <div class="btn-group" role="group" aria-label="...">
-              <button type="button" class="btn btn-default">REFRESH</button>
+              <button id="btnRefresh" type="btnRefresh" class="btn btn-default">REFRESH</button>
             </div>
           </div>
         </div>
@@ -280,6 +280,13 @@
     $('#datetimepicker1').datepicker();
     $('#datetimepicker2').datepicker();
 
+    $( "#datetimepicker1" ).datepicker( "option", "dateFormat", 'yy/mm/dd' );
+    $( "#datetimepicker2" ).datepicker( "option", "dateFormat", 'yy/mm/dd' );
+
+    $('#datetimepicker1').val('<%= @from %>');
+    $('#datetimepicker2').val('<%= @to %>');
+
+
     // bind event
     $( "#btnToday" ).on( "click", function() {
       $( this ).prop( "disabled", true );
@@ -357,6 +364,24 @@
       $('#datetimepicker2').val(params.to);
 
       MainIndex.reload(params);
+    });
+
+    $( "#btnRefresh" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      var params = {
+        from: $('#datetimepicker1').val(),
+        to: $('#datetimepicker2').val(),
+      };
+
+      MainIndex.reload(params);
+    });
+
+    $( "#btnShowDatetimePicker1" ).on( "click", function() {
+      $('#datetimepicker1').datepicker( 'show' );
+    });
+
+    $( "#btnShowDatetimePicker2" ).on( "click", function() {
+      $('#datetimepicker2').datepicker( 'show' );
     });
 
     // Init DataTable
