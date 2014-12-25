@@ -10,9 +10,9 @@
  * defined in the other CSS/SCSS files in this directory. It is generally better to create a new
  * file per style scope.
  *
- *= require 'bootstrap/css/bootstrap.min.css'
+ *= require 'bootstrap/css/bootstrap.min.css.scss'
  *# require 'bootstrap/css/bootstrap-theme.min.css'
-  *= require 'jquery-ui'
+ *= require 'jquery-ui'
  *= require 'datatable/media/css/jquery.dataTables.min.css'
  *= require 'starter-template.css'
  *= require_self
