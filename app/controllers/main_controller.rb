@@ -6,17 +6,12 @@ class MainController < ApplicationController
     args = {
       from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
       to: d.at_end_of_month.strftime('%Y/%m/%d'),
-      limit: 5,
-      offset: 0
+      length: 5,
+      start: 0
     }
     
     # the default values to be overwritten by user custom values
-    p 'AAAAAAAAAAAAA', args
     args.merge!(params.symbolize_keys)
-
-    p params
-    p args
-    p "END"
 
     # for showing on view
     @from = args[:from]
@@ -30,6 +25,20 @@ class MainController < ApplicationController
   end
 
   def domains
+    d = Date.today
+
+    args = {
+      from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
+      to: d.at_end_of_month.strftime('%Y/%m/%d')
+    }
+
+    # the default values to be overwritten by user custom values
+    args.merge!(params.symbolize_keys)
+
+    # for showing on view
+    @from = args[:from]
+    @to = args[:to]
+
     # show danh sách domain by status
     @status = params[:status]
 
@@ -37,13 +46,13 @@ class MainController < ApplicationController
       format.html {}
       format.json {
         if @status == 'rejected'
-          data, count = Message.domain_by_rejected(params)
+          data, count = Message.domain_by_rejected(args)
         elsif @status == 'deferred'
-          data, count = Message.domain_by_deferred(params)
+          data, count = Message.domain_by_deferred(args)
         elsif @status == 'sent'
-          data, count = Message.domain_by_sent(params)
+          data, count = Message.domain_by_sent(args)
         elsif @status == 'bounced'
-          data, count = Message.domain_by_bounced(params)
+          data, count = Message.domain_by_bounced(args)
         end
 
         render json: { data: data.as_json(only: [:domain, :percentage, :volume]), recordsFiltered: count, recordsTotal: count}
@@ -54,10 +63,25 @@ class MainController < ApplicationController
   def users
     @domain = Base64.decode64(params[:base64_domain])
     @domain_encoded = params[:base64_domain]
+    
+    d = Date.today
+
+    args = {
+      from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
+      to: d.at_end_of_month.strftime('%Y/%m/%d')
+    }
+
+    # the default values to be overwritten by user custom values
+    args.merge!(params.symbolize_keys)
+
+    # for showing on view
+    @from = args[:from]
+    @to = args[:to]
+
     respond_to do |format|
       format.html {}
       format.json {
-        data, count = Message.users_by_domain(@domain)
+        data, count = Message.users_by_domain(@domain, args)
         render json: { data: data.as_json(only: [:recipient, :rejected, :deferred, :sent, :bounced]), recordsFiltered: count, recordsTotal: count}
       }
     end

@@ -8,7 +8,6 @@ module SqlHelper
   # @author Nghi P.
   def bulk_delete!(conditions)
     raise 'Parameter must be a Hash' unless conditions.is_a?(Array)
-    logger.info "About to delete #{conditions.count} items"
     return self.where("id IN (?)", conditions).delete_all
   end
 

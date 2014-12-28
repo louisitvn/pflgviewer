@@ -5,109 +5,111 @@ class Message < ActiveRecord::Base
   extend SqlHelper
   has_many :recipients, :primary_key => :number, :foreign_key => :number
 
+  DEFAULT_LIMIT = 20
+  DEFAULT_OFFSET = 0
+
   def self.load(file)
-    messages, recipients = PostfixLogParser.load(File.join(Rails.root, 'mail.log'))
+    messages = PostfixLogParser.load(File.join(Rails.root, 'mail.log'))
     Message.execute_db_update!(messages)
-    Recipient.execute_db_update!(recipients)
   end
 
   # why bother joining messages table, the recipients alone is not enough?
   def self.domain_by_deferred(params)
     sql = %Q{
-      SELECT rcpt.domain, count(rcpt.id) as volume, round(count(*)::numeric * 100 / (select count(*) from recipients), 2) as percentage
-      FROM recipients rcpt
-      WHERE rcpt.status = 'deferred' AND #{conditions_from_params(params)}
-      GROUP BY rcpt.domain
-      ORDER BY count(rcpt.id) DESC
+      SELECT msg.recipient_domain AS domain, count(msg.id) as volume, round(count(*)::numeric * 100 / (select count(*) FROM messages), 2) as percentage
+      FROM messages msg
+      WHERE msg.status = 'deferred' AND #{conditions_from_params(params)}
+      GROUP BY msg.recipient_domain
+      ORDER BY count(msg.id) DESC
       LIMIT :limit OFFSET :offset
     }
 
     count_sql = %Q{
       SELECT COUNT(*) FROM
       ( 
-        SELECT rcpt.domain
-        FROM recipients rcpt
-        WHERE rcpt.status = 'deferred' AND #{conditions_from_params(params)}
-        GROUP BY rcpt.domain
+        SELECT msg.recipient_domain
+        FROM messages msg
+        WHERE msg.status = 'deferred' AND #{conditions_from_params(params)}
+        GROUP BY msg.recipient_domain
       ) tmp
     }
 
-    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
+    data = self.find_by_sql([sql, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
     count = self.count_by_sql(count_sql)
     return data, count
   end
 
   def self.domain_by_sent(params)
     sql = %Q{
-      SELECT rcpt.domain, count(rcpt.id) as volume, round(count(*)::numeric * 100 / (select count(*) from recipients), 2) as percentage
-      FROM recipients rcpt
-      WHERE rcpt.status = 'sent' AND #{conditions_from_params(params)}
-      GROUP BY rcpt.domain
-      ORDER BY count(rcpt.id) DESC
+      SELECT msg.recipient_domain AS domain, count(msg.id) as volume, round(count(*)::numeric * 100 / (select count(*) FROM messages), 2) as percentage
+      FROM messages msg
+      WHERE msg.status = 'sent' AND #{conditions_from_params(params)}
+      GROUP BY msg.recipient_domain
+      ORDER BY count(msg.id) DESC
       LIMIT :limit OFFSET :offset
     }
 
     count_sql = %Q{
       SELECT COUNT(*) FROM
       ( 
-        SELECT rcpt.domain
-        FROM recipients rcpt
-        WHERE rcpt.status = 'sent' AND #{conditions_from_params(params)}
-        GROUP BY rcpt.domain
+        SELECT msg.recipient_domain
+        FROM messages msg
+        WHERE msg.status = 'sent' AND #{conditions_from_params(params)}
+        GROUP BY msg.recipient_domain
       ) tmp
     }
     
-    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
+    data = self.find_by_sql([sql, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
     count = self.count_by_sql(count_sql)
     return data, count
   end
 
   def self.domain_by_bounced(params)
     sql = %Q{
-      SELECT rcpt.domain, count(rcpt.id) as volume, round(count(*)::numeric * 100 / (select count(*) from recipients), 2) as percentage
-      FROM recipients rcpt
-      WHERE rcpt.status = 'bounced' AND #{conditions_from_params(params)}
-      GROUP BY rcpt.domain
-      ORDER BY count(rcpt.id) DESC
+      SELECT msg.recipient_domain AS domain, count(msg.id) as volume, round(count(*)::numeric * 100 / (select count(*) FROM messages), 2) as percentage
+      FROM messages msg
+      WHERE msg.status = 'bounced' AND #{conditions_from_params(params)}
+      GROUP BY msg.recipient_domain
+      ORDER BY count(msg.id) DESC
       LIMIT :limit OFFSET :offset
     }
 
     count_sql = %Q{
       SELECT COUNT(*) FROM
       ( 
-        SELECT rcpt.domain
-        FROM recipients rcpt
-        WHERE rcpt.status = 'bounced' AND #{conditions_from_params(params)}
-        GROUP BY rcpt.domain
+        SELECT msg.recipient_domain
+        FROM messages msg
+        WHERE msg.status = 'bounced' AND #{conditions_from_params(params)}
+        GROUP BY msg.recipient_domain
       ) tmp
     }
 
-    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
+    data = self.find_by_sql([sql, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
     count = self.count_by_sql(count_sql)
     return data, count
   end
 
   def self.domain_by_rejected(params)
     sql = %Q{
-      SELECT rcpt.domain, count(rcpt.id) as volume, round(count(*)::numeric * 100 / (select count(*) from recipients), 2) as percentage
-      FROM recipients rcpt
-      WHERE rcpt.status = 'rejected' AND #{conditions_from_params(params)}
-      GROUP BY rcpt.domain
-      ORDER BY count(rcpt.id) DESC
+      SELECT msg.recipient_domain AS domain, count(msg.id) as volume, round(count(*)::numeric * 100 / (select count(*) FROM messages), 2) as percentage
+      FROM messages msg
+      WHERE msg.status = 'rejected' AND #{conditions_from_params(params)}
+      GROUP BY msg.recipient_domain
+      ORDER BY count(msg.id) DESC
       LIMIT :limit OFFSET :offset
     }
 
     count_sql = %Q{
       SELECT COUNT(*) FROM
       ( 
-        SELECT rcpt.domain
-        FROM recipients rcpt
-        WHERE rcpt.status = 'rejected' AND #{conditions_from_params(params)}
-        GROUP BY rcpt.domain
+        SELECT msg.recipient_domain
+        FROM messages msg
+        WHERE msg.status = 'rejected' AND #{conditions_from_params(params)}
+        GROUP BY msg.recipient_domain
       ) tmp
     }
 
-    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
+    data = self.find_by_sql([sql, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
     count = self.count_by_sql(count_sql)
     return data, count
   end
@@ -119,14 +121,19 @@ class Message < ActiveRecord::Base
              SUM(case status when 'sent' then 1 else 0 end) AS sent,
              SUM(case status when 'deferred' then 1 else 0 end) AS deferred,
              SUM(case status when 'bounced' then 1 else 0 end) AS bounced
-      FROM recipients 
-      GROUP BY recipient
+      FROM messages 
+      WHERE recipient_domain = :domain AND #{conditions_from_params(params)}
+      GROUP BY recipient_domain, recipient
       LIMIT :limit OFFSET :offset
     }
 
-    count_sql = 'SELECT COUNT(*) FROM (SELECT DISTINCT recipient FROM recipients) tmp'
-    data = self.find_by_sql([sql, limit: params[:limit] || 100, offset: params[:offset] || 0 ])
-    count = self.count_by_sql(count_sql)
+    p params
+    p sql
+    p "------------------"
+
+    count_sql = 'SELECT COUNT(*) FROM (SELECT DISTINCT recipient FROM messages WHERE recipient_domain = :domain) tmp'
+    data = self.find_by_sql([sql, domain: domain, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
+    count = self.count_by_sql([count_sql, domain: domain])
     return data, count
   end
 
@@ -177,8 +184,10 @@ class Message < ActiveRecord::Base
     conn = self.connection
 
     if params[:from]
+      p params[:from]
       from = DateTime.parse(params[:from])
-      
+      p from
+      p "truoc va sau"
       if params[:to]
         to = DateTime.parse(params[:to]) + 1.days
         conditions = "datetime >= #{conn.quote(from)} AND datetime < #{conn.quote(to)}"
