@@ -1,4 +1,9 @@
 require 'date'
+
+
+class String
+  
+end
 class PostfixLogParser
   NOQUEUE = 'NOQUEUE'
   LABELS = [ NOQUEUE ]
@@ -37,13 +42,13 @@ class PostfixLogParser
     messages.each do |number, lines|
       msg = {}
 
-      msg[:sender] = lines.join(" ")[/(?<=from=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i].clean_email
+      msg[:sender] = extract_email(lines.join(" "), 'from')
       msg[:domain] = msg[:sender] ? msg[:sender][/(?<=@).*/] : nil
       msg[:number] = number
       messages_insert_queue << msg
       lines.each { |line|
         rcpt = {}
-        rcpt[:recipient] = line[/(?<=to=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i].clean_email
+        rcpt[:recipient] = extract_email(line, 'to')
         rcpt[:status] = line[/(?<=status=)[a-z0-9]+/]
         rcpt[:domain] = rcpt[:recipient][/(?<=@).*/] if rcpt[:recipient]
         rcpt[:number] = msg[:number]
@@ -58,8 +63,20 @@ class PostfixLogParser
     # Others: line with no message ID
     others.each do |line|
       id = extract_id(line)
+
       if id == NOQUEUE
-        # extract from, to, reject
+        msg = {}
+        rcpt = {}
+
+        msg[:sender] = extract_email(line, 'from')
+        msg[:domain] = msg[:sender] ? msg[:sender][/(?<=@).*/] : nil
+        rcpt[:recipient] = extract_email(line, 'to')
+        rcpt[:domain] = rcpt[:recipient][/(?<=@).*/] if rcpt[:recipient]
+        rcpt[:datetime] = DateTime.parse(line[0..14])
+        rcpt[:status] = 'rejected'
+        
+        messages_insert_queue << msg
+        recipients_insert_queue << rcpt
       else
         p line
         raise
@@ -71,11 +88,21 @@ class PostfixLogParser
 
     return [messages_insert_queue, recipients_insert_queue]
   end
-
+  
+  # helper
   def self.extract_id(line)
     line[/(?<=\]:\s)[A-Z0-9]+(?=:)/]
   end
+
+  def self.extract_email(line, type)
+    raise "type must be either 'from' or 'to'" unless ['from', 'to'].include?(type)
+
+    email = line[/(?<=to=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i] if type == 'to'
+    email = line[/(?<=from=)<{0,1}[a-z0-9][a-z0-9_\.]+@[a-z0-9][a-z0-9_\.\-]+\.[a-z0-9_\.\-]+>{0,1}/i] if type == 'from'
+
+    return email.gsub(/[^a-zA-Z0-9\-\_\.@]/, "").downcase if email
+  end
 end
 
-# a,b = PostfixLogParser.load('/tmp/postfix.log')
+# a,b = PostfixLogParser.load('/home/nghi/mail.log')
 

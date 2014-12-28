@@ -34,12 +34,9 @@ module SqlHelper
     unless objects.is_a? Array
       raise 'The input objects must be an array of ActiveRecord::Base objects or hashes'
     end
-
-    logger.info "About to insert/update #{objects.count} items"
     
     return nil if objects.blank?
 
-    logger.info "Bulk SQL INSERT/UPDATE FOR: #{t=Time.now; self.name} #{objects.size}"
     puts "Bulk SQL INSERT/UPDATE FOR: #{t=Time.now; self.name} #{objects.size}"
 
     sql_strs = ["BEGIN"]
@@ -53,7 +50,6 @@ module SqlHelper
       end
     }
 
-    logger.info "DONE #{Time.now - t}"
     puts "DONE #{Time.now - t}"
     @last_executed_at
   end

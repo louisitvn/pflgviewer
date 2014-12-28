@@ -208,12 +208,67 @@
 <script>
   // Global
   var MainIndex = {
+    DATE_FORMAT: 'YYYY/MM/DD',
     LIMIT: '5',
     OFFSET: '0',
     reload: function(params) {
       params.limit = this.LIMIT;
       params.offset = this.OFFSET;
       window.location.href = window.location.pathname + '?' + $.param(params);
+    },
+    view_by: function(view) {
+      var params;
+      switch(view) {
+        case 'today':
+          params = {
+            from: moment().format(this.DATE_FORMAT),
+            to: moment().format(this.DATE_FORMAT)
+          };
+          break;
+        case 'yesterday':
+          params = {
+            from: moment().subtract(1, "days").format(this.DATE_FORMAT),
+            to: moment().subtract(1, "days").format(this.DATE_FORMAT)
+          };
+          break;
+        case 'this-week':
+          params = {
+            from: moment().startOf('week').format(this.DATE_FORMAT),
+            to: moment().endOf('week').format(this.DATE_FORMAT)
+          };
+          break;
+        case 'last-week':
+          params = {
+            from: moment().subtract(7, "days").startOf('week').format(this.DATE_FORMAT),
+            to: moment().subtract(7, "days").endOf('week').format(this.DATE_FORMAT)
+          };
+          break;
+        case 'this-month':
+          params = {
+            from: moment().startOf('month').format(this.DATE_FORMAT),
+            to: moment().endOf('month').format(this.DATE_FORMAT)
+          };
+          break;
+        case 'last-month':
+          params = {
+            from: moment().subtract(1, "months").startOf('month').format(this.DATE_FORMAT),
+            to: moment().subtract(1, "months").endOf('month').format(this.DATE_FORMAT)
+          };
+          break;
+        case 'dates':
+          params = {
+            from: $('#datetimepicker1').val(),
+            to: $('#datetimepicker2').val()
+          };
+          break;
+        default:
+          alert('invalid input');
+      }
+
+      $('#datetimepicker1').val(params.from);
+      $('#datetimepicker2').val(params.to);
+      
+      this.reload(params);
     }
   }
 
@@ -232,90 +287,37 @@
     // bind event
     $( "#btnToday" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      var params = {
-        from: moment().format('YYYY/MM/DD'),
-        to: moment().format('YYYY/MM/DD')
-      };
-
-      $('#datetimepicker1').val(params.from);
-      $('#datetimepicker2').val(params.to);
-
-      MainIndex.reload(params);
+      MainIndex.view_by('today');
     });
 
     $( "#btnYesterday" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      var params = {
-        from: moment().subtract(1, "days").format('YYYY/MM/DD'),
-        to: moment().subtract(1, "days").format('YYYY/MM/DD')
-      };
-
-      $('#datetimepicker1').val(params.from);
-      $('#datetimepicker2').val(params.to);
-
-      MainIndex.reload(params);
+      MainIndex.view_by('yesterday');
     });
 
     $( "#btnThisWeek" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      var params = {
-        from: moment().startOf('week').format('YYYY/MM/DD'),
-        to: moment().endOf('week').format('YYYY/MM/DD'),
-      };
-
-      $('#datetimepicker1').val(params.from);
-      $('#datetimepicker2').val(params.to);
-
-      MainIndex.reload(params);
+      MainIndex.view_by('this-week');
     });
 
     $( "#btnLastWeek" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      var params = {
-        from: moment().subtract(7, "days").startOf('week').format('YYYY/MM/DD'),
-        to: moment().subtract(7, "days").endOf('week').format('YYYY/MM/DD'),
-      };
-
-      $('#datetimepicker1').val(params.from);
-      $('#datetimepicker2').val(params.to);
-
-      MainIndex.reload(params);
+      MainIndex.view_by('last-week');
     });
 
     $( "#btnThisMonth" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      var params = {
-        from: moment().startOf('month').format('YYYY/MM/DD'),
-        to: moment().endOf('month').format('YYYY/MM/DD'),
-      };
-
-      $('#datetimepicker1').val(params.from);
-      $('#datetimepicker2').val(params.to);
-
-      MainIndex.reload(params);
+      MainIndex.view_by('this-month');
     });
 
     $( "#btnLastMonth" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      var params = {
-        from: moment().subtract(1, "months").startOf('month').format('YYYY/MM/DD'),
-        to: moment().subtract(1, "months").endOf('month').format('YYYY/MM/DD'),
-      };
-
-      $('#datetimepicker1').val(params.from);
-      $('#datetimepicker2').val(params.to);
-
-      MainIndex.reload(params);
+      MainIndex.view_by('last-month');
     });
 
     $( "#btnRefresh" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      var params = {
-        from: $('#datetimepicker1').val(),
-        to: $('#datetimepicker2').val(),
-      };
-
-      MainIndex.reload(params);
+      MainIndex.view_by('dates');
     });
 
     $( "#btnShowDatetimePicker1" ).on( "click", function() {

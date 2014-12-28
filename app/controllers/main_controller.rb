@@ -1,14 +1,32 @@
 class MainController < ApplicationController
   def index
-    # for showing to view
-    @from = params[:from]
-    @to = params[:to]
+    # Default: show data of this month, limit 5 entries
+    d = Date.today
+
+    args = {
+      from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
+      to: d.at_end_of_month.strftime('%Y/%m/%d'),
+      limit: 5,
+      offset: 0
+    }
+    
+    # the default values to be overwritten by user custom values
+    p 'AAAAAAAAAAAAA', args
+    args.merge!(params.symbolize_keys)
+
+    p params
+    p args
+    p "END"
+
+    # for showing on view
+    @from = args[:from]
+    @to = args[:to]
     
     # retrieving data
-    @dommain_by_deferred, count = Message.domain_by_deferred(params)
-    @dommain_by_bounced, count = Message.domain_by_bounced(params)
-    @dommain_by_sent, count = Message.domain_by_sent(params)
-    @dommain_by_rejected, count = Message.domain_by_rejected(params)
+    @dommain_by_deferred, count = Message.domain_by_deferred(args)
+    @dommain_by_bounced, count = Message.domain_by_bounced(args)
+    @dommain_by_sent, count = Message.domain_by_sent(args)
+    @dommain_by_rejected, count = Message.domain_by_rejected(args)
   end
 
   def domains
