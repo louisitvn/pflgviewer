@@ -17,13 +17,16 @@ class Message < ActiveRecord::Base
   def self.domain_by(status, params)
     last_30_days_end = (DateTime.parse(params[:to]) - 1.days)
     last_30_days_start = last_30_days_end - 30.days
+    
+    # @todo Khi count phải bỏ mấy thằng null!!!!!!!!!
 
     sql = %Q{
       SELECT t1.*, t2.*, (percentage-percentage_30) AS change FROM
       (
         SELECT msg.recipient_domain AS domain, count(msg.id) as volume, round(count(*)::numeric * 100 / (select count(*) FROM messages), 2) as percentage
         FROM messages msg
-        WHERE msg.status = :status AND #{conditions_from_params(params)}
+        WHERE msg.status = :status AND #{conditions_from_params(params)} 
+          AND msg.recipient_domain IS NOT NULL
         GROUP BY msg.recipient_domain
         LIMIT :limit OFFSET :offset
       ) t1
@@ -32,6 +35,7 @@ class Message < ActiveRecord::Base
         SELECT msg.recipient_domain AS domain, count(msg.id) as volume_30, round(count(*)::numeric * 100 / (select count(*) FROM messages), 2) as percentage_30
         FROM messages msg
         WHERE msg.status = :status AND #{conditions_from_params(from: last_30_days_start, to: last_30_days_end)}
+          AND msg.recipient_domain IS NOT NULL
         GROUP BY msg.recipient_domain
         LIMIT :limit OFFSET :offset
       ) t2
@@ -129,8 +133,13 @@ class Message < ActiveRecord::Base
   end
 
   def self.sorts_by_params(params)
-    sort_by = params[:columns][ params[:order]["0"]['column'] ]['name']
-    sort_order = params[:order]["0"]['dir']
+    begin
+      sort_by = params[:columns][ params[:order]["0"]['column'] ]['name'] 
+      sort_order = params[:order]["0"]['dir']
+    rescue Exception => ex
+      
+    end
+
     if sort_by and sort_order
       "ORDER BY #{sort_by} #{sort_order}" 
     else

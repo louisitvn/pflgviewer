@@ -11,32 +11,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20141210020236) do
+ActiveRecord::Schema.define(version: 0) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "messages", force: true do |t|
-    t.string   "number"
-    t.integer  "size"
-    t.string   "relay"
-    t.string   "sender"
-    t.string   "sender_domain"
-    t.string   "recipient"
-    t.string   "recipient_domain"
-    t.string   "status"
-    t.text     "status_message"
-    t.string   "status_code"
-    t.datetime "datetime"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-  end
-
   create_table "recipients", force: true do |t|
     t.string   "number"
     t.string   "recipient"
-    t.string   "sender"
-    t.string   "sender_domain"
     t.string   "domain"
     t.string   "status"
     t.datetime "datetime"
