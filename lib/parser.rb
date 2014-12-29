@@ -21,16 +21,21 @@ class PostfixLogParser
       # nếu entry có dạng: NOQUEUE: reject thì add tạm vào 1 array
       # Sau này sẽ add vào 1 dòng message và 1 dòng recipient (rejected)
       msg[:number] = number
+      msg[:size] = line[/(?<=size=)[0-9]+/]
       msg[:sender] = extract_email(line, 'from')
       msg[:sender_domain] = msg[:sender] ? msg[:sender][/(?<=@).*/] : nil
       msg[:recipient] = extract_email(line, 'to')
       msg[:recipient_domain] = msg[:recipient][/(?<=@).*/] if msg[:recipient]
       msg[:datetime] = DateTime.parse(line[0..14])
+      msg[:status_code] = line[/(?<=[\( ])[0-9]{3}(?= )/]
+      msg[:relay] = line[/(?<=relay=)[a-zA-Z0-9\-_\.]+/]
 
       if number == NOQUEUE
         msg[:status] = 'rejected'
+        msg[:status_message] = line[/Relay access denied/]
       else
         msg[:status] = line[/(?<=status=)[a-z0-9]+/]
+        msg[:status_message] = line[/(?<=\().*(?=\))/]
       end
       
       messages << msg

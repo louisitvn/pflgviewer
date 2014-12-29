@@ -18,12 +18,15 @@ ActiveRecord::Schema.define(version: 20141210020236) do
 
   create_table "messages", force: true do |t|
     t.string   "number"
+    t.integer  "size"
+    t.string   "relay"
     t.string   "sender"
     t.string   "sender_domain"
     t.string   "recipient"
     t.string   "recipient_domain"
     t.string   "status"
-    t.integer  "size"
+    t.text     "status_message"
+    t.string   "status_code"
     t.datetime "datetime"
     t.datetime "created_at"
     t.datetime "updated_at"

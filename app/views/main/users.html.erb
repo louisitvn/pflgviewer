@@ -1,5 +1,5 @@
-    <div class="container">
-      <div class="page-header">
+    <div class="container-fluid">
+      <div style="margin:20px 0 20px">
         <div class="row">
           <div class='col-sm-3'>
             <div class="form-group">
@@ -37,18 +37,19 @@
             </div>
           </div>
         </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <ol class="breadcrumb" style="margin-top: 20px">
+              <li><a href="/">Home</a></li>
+              <li class="active"><%= link_to @domain, users_by_domain_path(base65_domain: @encoded_domain) %></li>
+              <li class="active">Recipient Summary</li>
+            </ol>
+          </div>
+        </div>
       </div>
       <div class="row">
         <div class="col-md-12">
-          <div class="panel panel-default">
-            <!-- Default panel contents -->
-            <div class="panel-heading">Users by domain: <%= @domain %></div>
-            <div class="panel-body">
-              <!-- Table -->
-              <table id="main-table" class="display table" cellspacing="0" width="100%"></table>
-            </div>
-          </div>
-          
+          <table id="main-table" class="display table" cellspacing="0" width="100%"></table>
         </div>
       </div>
     </div>
@@ -203,21 +204,22 @@
         { 
           "name": "recipient",
           "data": function(row, b, c, d){
-            return row.recipient;
+            return '<a href="<%= details_by_domain_path(base64_domain: @domain_encoded)%>">' + row.recipient + '</a>';
           }
         },
         { "name": "sent", "title": "Sent", "data": "sent" },
-        { "name": "sent", "title": "Received", "data": "sent" },
+        { "name": "delivered", "title": "Received", "data": "delivered" },
         //{ "name": "deferred", "title": "Deferred",  "data": "deferred" },
         //{ "name": "rejected", "title": "Rejected",  "data": "rejected" },
         { "name": "bounced", "title": "Bounced",  "data": "bounced" },
-        { "name": "bounced", "title": "Success Rate",  "data": function() { return '30%'; } },
-        { "name": "sent", "title": "Sent<br>(last 30 days)", "data": "sent" },
-        { "name": "sent", "title": "Received<br>(last 30 days)", "data": "sent" },
+        { "name": "success_rate", "title": "Success Rate",  "data": function(row){ return row.success_rate + '%' } },
+
+        { "name": "sent_30", "title": "Sent<br>(last 30 days)", "data": "sent_30" },
+        { "name": "delivered_30", "title": "Received<br>(last 30 days)", "data": "delivered_30" },
         //{ "name": "deferred", "title": "Deferred",  "data": "deferred" },
         //{ "name": "rejected", "title": "Rejected<br>(last 30 days)",  "data": "rejected" },
-        { "name": "bounced", "title": "Bounced<br>(last 30 days)",  "data": "bounced" },
-        { "name": "bounced", "title": "Success Rate",  "data": function(a,b,c,d) { return '30%'; } },
+        { "name": "bounced_30", "title": "Bounced<br>(last 30 days)",  "data": "bounced_30" },
+        { "name": "success_rate_30", "title": "Success Rate (last 30 days)",  "data": function(row){ return row.success_rate_30 + '%' } }
       ],
       
       drawCallback: function( settings ) {

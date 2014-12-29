@@ -11,7 +11,7 @@ Rails.application.routes.draw do
 
   get 'main/domains/:status' => 'main#domains', as: :domains_by_status # danh sách domain by status
   get 'main/users/:base64_domain' => 'main#users', as: :users_by_domain # danh sách user by domain
-  get 'main/user/:user' => 'main#user', as: :user_details # danh sách message by user
+  get 'main/details/:base64_domain' => 'main#details', as: :details_by_domain
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

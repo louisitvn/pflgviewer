@@ -1,4 +1,4 @@
-    <div class="container">
+    <div class="container-fluid">
       <div style="margin:20px 0 20px">
         <div class="row">
           <div class='col-sm-3'>
@@ -37,25 +37,26 @@
             </div>
           </div>
         </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <ol class="breadcrumb" style="margin-top: 20px">
+              <li><a href="/">Home</a></li>
+              <li class="active"><%= link_to @domain, users_by_domain_path(base65_domain: @encoded_domain) %></li>
+              <li class="active">Recipient Details</li>
+            </ol>
+          </div>
+        </div>
       </div>
       <div class="row">
         <div class="col-md-12">
-          <div class="panel panel-default">
-            <!-- Default panel contents -->
-            <div class="panel-heading">Domains by <%= @status %></div>
-            <div class="panel-body">
-              <!-- Table -->
-              <table id="main-table" class="display table" cellspacing="0" width="100%"></table>
-            </div>
-          </div>
-          
+          <table id="main-table" class="display table" cellspacing="0" width="100%"></table>
         </div>
       </div>
     </div>
-  
+
 <script>
   // Global
-  var MainDomain = {
+  var MainUser = {
     DATE_FORMAT: 'YYYY/MM/DD',
     FROM: '<%= @from %>',
     TO: '<%= @to %>',
@@ -133,37 +134,37 @@
     // bind event
     $( "#btnToday" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      MainDomain.view_by('today');
+      MainUser.view_by('today');
     });
 
     $( "#btnYesterday" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      MainDomain.view_by('yesterday');
+      MainUser.view_by('yesterday');
     });
 
     $( "#btnThisWeek" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      MainDomain.view_by('this-week');
+      MainUser.view_by('this-week');
     });
 
     $( "#btnLastWeek" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      MainDomain.view_by('last-week');
+      MainUser.view_by('last-week');
     });
 
     $( "#btnThisMonth" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      MainDomain.view_by('this-month');
+      MainUser.view_by('this-month');
     });
 
     $( "#btnLastMonth" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      MainDomain.view_by('last-month');
+      MainUser.view_by('last-month');
     });
 
     $( "#btnRefresh" ).on( "click", function() {
       $( this ).prop( "disabled", true );
-      MainDomain.view_by('dates');
+      MainUser.view_by('dates');
     });
 
     $( "#btnShowDatetimePicker1" ).on( "click", function() {
@@ -191,24 +192,28 @@
       order: [[ 1, "asc" ]],
       pageLength: 20,
       ajax: {
-        url: '/main/domains/<%= @status%>.json',
+        url: '/main/details/<%= @domain_encoded %>.json',
         dataSrc: 'data',
         data: function(params) {
           //params.filter = VyrianSearchPage.filter;
-          params.from = MainDomain.FROM;
-          params.to = MainDomain.TO;
+          params.from = MainUser.FROM;
+          params.to = MainUser.TO;
         }
       },
       columns: [
         { 
-          "name": "domain",
+          "name": "recipient",
+          "title": "Recipient",
           "data": function(row, b, c, d){
-            return '<a href="<%= users_by_domain_path(base64_domain: '')%>' + btoa(row.domain) + '">' + row.domain + '</a>';
+            return row.recipient;
           }
         },
-        { "name": "percentage", "title": "% <%= @status.capitalize %>", "data": function(row) {return row.percentage + '%';} },
-        { "name": "volume", "title": "Volume",  "data": "volume" },
-        { "name": "change", "title": "Change (last 30 days)",  "data": function(row) {return row.change + '%';} }
+        { "name": "relay", "title": "Recipient Server",  "data": "relay" },
+        { "name": "datetime", "title": "Date", "data": function(row) { return moment(row.datetime).format('YYYY-MM-DD'); } },
+        { "name": "datetime", "orderable": false, "title": "Time", "data": function(row) { return moment(row.datetime).format('HH:MM'); } },
+        { "name": "status_code", "title": "Status Code",  "data": "status_code" },
+        { "name": "status_message", "title": "Server Response",  "data": "status_message" },
+        { "name": "status", "title": "Delivery Status",  "data": "status" }
       ],
       
       drawCallback: function( settings ) {
@@ -220,3 +225,4 @@
     datatable.DataTable().draw();
 	});
 </script>
+
