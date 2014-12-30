@@ -1,0 +1,221 @@
+    <div class="container-fluid">
+      <div style="margin:20px 0 20px">
+        <div class="row">
+          <div class='col-sm-3'>
+            <div class="form-group">
+              <div class='input-group date'>
+                <input type='text' class="form-control"  id='datetimepicker1' value="<%= @from %>"/>
+                <span id="btnShowDatetimePicker1" class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+              </div>
+            </div>
+          </div>
+          <div class='col-sm-3'>
+            <div class="form-group">
+              <div class='input-group date'>
+                <input type='text' class="form-control"  id='datetimepicker2' value="<%= @to %>"/>
+                <span id="btnShowDatetimePicker2" class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="btn-group" role="group" aria-label="...">
+              <button id="btnRefresh" type="btnRefresh" class="btn btn-default">REFRESH</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm-8">
+            <div class="btn-group" role="group" aria-label="...">
+              <button id="btnToday" type="button" class="btn btn-default">Today</button>
+              <button id="btnYesterday" type="button" class="btn btn-default">Yesterday</button>
+              <button id="btnThisWeek" type="button" class="btn btn-default">This Week</button>
+              <button id="btnLastWeek" type="button" class="btn btn-default">Last Week</button>
+              <button id="btnThisMonth" type="button" class="btn btn-default">This Month</button>
+              <button id="btnLastMonth" type="button" class="btn btn-default">Last Month</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <table id="main-table" class="display table" cellspacing="0" width="100%"></table>
+        </div>
+      </div>
+    </div>
+  
+<script>
+  // Global
+  var MainDomain = {
+    DATE_FORMAT: 'YYYY/MM/DD',
+    FROM: '<%= @from %>',
+    TO: '<%= @to %>',
+    reload: function(params) {
+      window.location.href = window.location.pathname + '?' + $.param(params);
+    },
+    view_by: function(view) {
+      var params;
+      switch(view) {
+        case 'today':
+          params = {
+            from: moment().format(this.DATE_FORMAT),
+            to: moment().format(this.DATE_FORMAT)
+          };
+          break;
+        case 'yesterday':
+          params = {
+            from: moment().subtract(1, "days").format(this.DATE_FORMAT),
+            to: moment().subtract(1, "days").format(this.DATE_FORMAT)
+          };
+          break;
+        case 'this-week':
+          params = {
+            from: moment().startOf('week').format(this.DATE_FORMAT),
+            to: moment().endOf('week').format(this.DATE_FORMAT)
+          };
+          break;
+        case 'last-week':
+          params = {
+            from: moment().subtract(7, "days").startOf('week').format(this.DATE_FORMAT),
+            to: moment().subtract(7, "days").endOf('week').format(this.DATE_FORMAT)
+          };
+          break;
+        case 'this-month':
+          params = {
+            from: moment().startOf('month').format(this.DATE_FORMAT),
+            to: moment().endOf('month').format(this.DATE_FORMAT)
+          };
+          break;
+        case 'last-month':
+          params = {
+            from: moment().subtract(1, "months").startOf('month').format(this.DATE_FORMAT),
+            to: moment().subtract(1, "months").endOf('month').format(this.DATE_FORMAT)
+          };
+          break;
+        case 'dates':
+          params = {
+            from: $('#datetimepicker1').val(),
+            to: $('#datetimepicker2').val()
+          };
+          break;
+        default:
+          alert('invalid input');
+      }
+
+      $('#datetimepicker1').val(params.from);
+      $('#datetimepicker2').val(params.to);
+      
+      this.reload(params);
+    }
+  }
+
+	jQuery(document).ready(function() {
+    // datepicker
+    $('#datetimepicker1').datepicker();
+    $('#datetimepicker2').datepicker();
+
+    $( "#datetimepicker1" ).datepicker( "option", "dateFormat", 'yy/mm/dd' );
+    $( "#datetimepicker2" ).datepicker( "option", "dateFormat", 'yy/mm/dd' );
+
+    $('#datetimepicker1').val('<%= @from %>');
+    $('#datetimepicker2').val('<%= @to %>');
+
+
+    // bind event
+    $( "#btnToday" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      MainDomain.view_by('today');
+    });
+
+    $( "#btnYesterday" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      MainDomain.view_by('yesterday');
+    });
+
+    $( "#btnThisWeek" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      MainDomain.view_by('this-week');
+    });
+
+    $( "#btnLastWeek" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      MainDomain.view_by('last-week');
+    });
+
+    $( "#btnThisMonth" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      MainDomain.view_by('this-month');
+    });
+
+    $( "#btnLastMonth" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      MainDomain.view_by('last-month');
+    });
+
+    $( "#btnRefresh" ).on( "click", function() {
+      $( this ).prop( "disabled", true );
+      MainDomain.view_by('dates');
+    });
+
+    $( "#btnShowDatetimePicker1" ).on( "click", function() {
+      $('#datetimepicker1').datepicker( 'show' );
+    });
+
+    $( "#btnShowDatetimePicker2" ).on( "click", function() {
+      $('#datetimepicker2').datepicker( 'show' );
+    });
+	});
+</script>
+
+<script>
+  // Global
+  var datatable;
+
+	jQuery(document).ready(function() {
+    // Init DataTable
+    datatable = $('#main-table').dataTable( {
+      serverSide: true,
+      processing: true,
+      retrieve: true,
+      dom: 'rtip',
+      deferLoading: true,
+      order: [[ 1, "asc" ]],
+      pageLength: 20,
+      ajax: {
+        url: '/main/all.json',
+        dataSrc: 'data',
+        data: function(params) {
+          //params.filter = VyrianSearchPage.filter;
+          params.from = MainDomain.FROM;
+          params.to = MainDomain.TO;
+        }
+      },
+      columns: [
+        { 
+          "name": "recipient_domain",
+          "data": function(row, b, c, d){
+            return '<a href="<%= users_by_domain_path(base64_domain: '')%>' + btoa(row.recipient_domain) + '">' + row.recipient_domain + '</a>';
+          }
+        },
+        { "name": "sent", "title": "% Sent", "data": function(row) {return row.sent + '%';} },
+        { "name": "deferred", "title": "% Deferred", "data": function(row) {return row.deferred + '%';} },
+        { "name": "bounced", "title": "% Bounced", "data": function(row) {return row.bounced + '%';} },
+        { "name": "rejected", "title": "% Rejected", "data": function(row) {return row.rejected + '%';} },
+        { "name": "expired", "title": "% Expired", "data": function(row) {return row.expired + '%';} },
+        { "name": "sent_30", "title": "% Sent", "data": function(row) {return row.sent + '%';} },
+        { "name": "deferred_30", "title": "% Deferred (last 30 days)", "data": function(row) {return row.deferred_30 + '%';} },
+        { "name": "bounced_30", "title": "% Bounced (last 30 days)", "data": function(row) {return row.bounced_30 + '%';} },
+        { "name": "rejected_30", "title": "% Rejected (last 30 days)", "data": function(row) {return row.rejected_30 + '%';} },
+        { "name": "expired_30", "title": "% Expired (last 30 days)", "data": function(row) {return row.expired_30 + '%';} },
+      ],
+      
+      drawCallback: function( settings ) {
+        //
+      }
+    } );
+
+    // load
+    datatable.DataTable().draw();
+	});
+</script>

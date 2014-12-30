@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   resources :main do
     collection do 
       get 'index'
+      get 'all'
     end
   end
 

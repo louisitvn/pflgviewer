@@ -50,6 +50,31 @@ class MainController < ApplicationController
     end
   end
 
+  def all
+    d = Date.today
+
+    args = {
+      from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
+      to: d.at_end_of_month.strftime('%Y/%m/%d')
+    }
+
+    # the default values to be overwritten by user custom values
+    args.merge!(params.symbolize_keys)
+
+    # for showing on view
+    @from = args[:from]
+    @to = args[:to]
+
+    respond_to do |format|
+      format.html {}
+      format.json {
+        data, count = Message.domain_statistics(args)
+
+        render json: { data: data, recordsFiltered: count, recordsTotal: count}
+      }
+    end
+  end
+
   def users
     @domain = Base64.decode64(params[:base64_domain])
     @domain_encoded = params[:base64_domain]

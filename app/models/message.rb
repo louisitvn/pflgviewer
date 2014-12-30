@@ -40,7 +40,7 @@ class Message < ActiveRecord::Base
         LIMIT :limit OFFSET :offset
       ) t2
       ON t1.domain = t2.domain
-      #{sorts_by_params(params)}
+      #{sorts_by_params(params.merge(default_order: 'volume DESC'))}
     }
 
     count_sql = %Q{
@@ -55,6 +55,49 @@ class Message < ActiveRecord::Base
 
     data = self.find_by_sql([sql, status: status, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
     count = self.count_by_sql([count_sql, status: status])
+    return data, count
+  end
+
+  def self.domain_statistics(params = {})
+    last_30_days_end = (DateTime.parse(params[:to]) - 1.days)
+    last_30_days_start = last_30_days_end - 30.days
+
+    sql = %Q{
+      SELECT * FROM
+      (
+        SELECT recipient_domain,
+               round(SUM(case status when 'sent' then 1 else 0 end)::numeric *100/count(*), 2) AS sent,
+               round(SUM(case status when 'rejected' then 1 else 0 end)::numeric *100/count(*), 2) AS rejected,
+               round(SUM(case status when 'bounced' then 1 else 0 end)::numeric *100/count(*), 2) AS bounced,
+               round(SUM(case status when 'deferred' then 1 else 0 end)::numeric *100/count(*), 2) AS deferred,
+               round(SUM(case status when 'expired' then 1 else 0 end)::numeric *100/count(*), 2) AS expired
+        FROM messages 
+        WHERE recipient_domain IS NOT NULL AND status IS NOT NULL AND #{conditions_from_params(params)}
+        GROUP BY recipient_domain
+        LIMIT :limit OFFSET :offset
+      ) t1 
+      
+      LEFT JOIN 
+      (
+        SELECT recipient_domain,
+               round(SUM(case status when 'sent' then 1 else 0 end)::numeric *100/count(*), 2) AS sent_30,
+               round(SUM(case status when 'rejected' then 1 else 0 end)::numeric *100/count(*), 2) AS rejected_30,
+               round(SUM(case status when 'bounced' then 1 else 0 end)::numeric *100/count(*), 2) AS bounced_30,
+               round(SUM(case status when 'deferred' then 1 else 0 end)::numeric *100/count(*), 2) AS deferred_30,
+               round(SUM(case status when 'expired' then 1 else 0 end)::numeric *100/count(*), 2) AS expired_30
+        FROM messages 
+        WHERE recipient_domain IS NOT NULL AND status IS NOT NULL AND #{conditions_from_params(from: last_30_days_start, to: last_30_days_end)}
+        GROUP BY recipient_domain
+        LIMIT :limit OFFSET :offset
+      ) t2 
+      
+      ON t1.recipient_domain = t2.recipient_domain
+      #{sorts_by_params(params)}
+    }
+
+    count_sql = 'SELECT COUNT(*) FROM (SELECT DISTINCT recipient_domain FROM messages) tmp'
+    data = self.find_by_sql([sql, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
+    count = self.count_by_sql([count_sql])
     return data, count
   end
 
@@ -140,8 +183,13 @@ class Message < ActiveRecord::Base
       
     end
 
+    p params, "SORRRRRRRRRRRRRRRRRRRRRRRRRR"
+    p sort_by
+
     if sort_by and sort_order
       "ORDER BY #{sort_by} #{sort_order}" 
+    elsif params[:default_order]
+      "ORDER BY #{params[:default_order]}"
     else
       ""
     end
