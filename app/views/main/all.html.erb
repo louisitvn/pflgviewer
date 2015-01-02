@@ -198,16 +198,16 @@
             return '<a href="<%= users_by_domain_path(base64_domain: '')%>' + btoa(row.recipient_domain) + '">' + row.recipient_domain + '</a>';
           }
         },
-        { "name": "sent", "title": "% Sent", "data": function(row) {return row.sent + '%';} },
-        { "name": "deferred", "title": "% Deferred", "data": function(row) {return row.deferred + '%';} },
-        { "name": "bounced", "title": "% Bounced", "data": function(row) {return row.bounced + '%';} },
-        { "name": "rejected", "title": "% Rejected", "data": function(row) {return row.rejected + '%';} },
-        { "name": "expired", "title": "% Expired", "data": function(row) {return row.expired + '%';} },
-        { "name": "sent_30", "title": "% Sent", "data": function(row) {return row.sent + '%';} },
-        { "name": "deferred_30", "title": "% Deferred (last 30 days)", "data": function(row) {return row.deferred_30 + '%';} },
-        { "name": "bounced_30", "title": "% Bounced (last 30 days)", "data": function(row) {return row.bounced_30 + '%';} },
-        { "name": "rejected_30", "title": "% Rejected (last 30 days)", "data": function(row) {return row.rejected_30 + '%';} },
-        { "name": "expired_30", "title": "% Expired (last 30 days)", "data": function(row) {return row.expired_30 + '%';} },
+        { "name": "sent", "title": "% Delivered", "data": function(row) {return row.sent + '% (' + row.sent_count + ')';} },
+        { "name": "deferred", "title": "% Deferred", "data": function(row) {return row.deferred + '% (' + row.deferred_count + ')';} },
+        { "name": "bounced", "title": "% Bounced", "data": function(row) {return row.bounced + '% (' + row.bounced_count + ')';} },
+        { "name": "rejected", "title": "% Rejected", "data": function(row) {return row.rejected + '% (' + row.rejected_count + ')';} },
+        { "name": "expired", "title": "% Expired", "data": function(row) {return row.expired + '% (' + row.expired_count + ')';} },
+        { "name": "sent_30", "title": "% Delivered", "data": function(row) {return row.sent + '% (' + row.sent_count_30 + ')';} },
+        { "name": "deferred_30", "title": "% Deferred (last 30 days)", "data": function(row) {return row.deferred_30 + '% (' + row.deferred_count_30 + ')';} },
+        { "name": "bounced_30", "title": "% Bounced (last 30 days)", "data": function(row) {return row.bounced_30 + '% (' + row.bounced_count_30 + ')';} },
+        { "name": "rejected_30", "title": "% Rejected (last 30 days)", "data": function(row) {return row.rejected_30 + '% (' + row.rejected_count_30 + ')';} },
+        { "name": "expired_30", "title": "% Expired (last 30 days)", "data": function(row) {return row.expired_30 + '% (' + row.expired_count_30 + ')';} },
       ],
       
       drawCallback: function( settings ) {

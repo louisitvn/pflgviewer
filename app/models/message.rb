@@ -66,6 +66,11 @@ class Message < ActiveRecord::Base
       SELECT * FROM
       (
         SELECT recipient_domain,
+               SUM(case status when 'sent' then 1 else 0 end) AS sent_count,
+               SUM(case status when 'rejected' then 1 else 0 end) AS rejected_count,
+               SUM(case status when 'bounced' then 1 else 0 end) AS bounced_count,
+               SUM(case status when 'deferred' then 1 else 0 end) AS deferred_count,
+               SUM(case status when 'expired' then 1 else 0 end) AS expired_count,
                round(SUM(case status when 'sent' then 1 else 0 end)::numeric *100/count(*), 2) AS sent,
                round(SUM(case status when 'rejected' then 1 else 0 end)::numeric *100/count(*), 2) AS rejected,
                round(SUM(case status when 'bounced' then 1 else 0 end)::numeric *100/count(*), 2) AS bounced,
@@ -80,6 +85,11 @@ class Message < ActiveRecord::Base
       LEFT JOIN 
       (
         SELECT recipient_domain,
+               SUM(case status when 'sent' then 1 else 0 end) AS sent_count_30,
+               SUM(case status when 'rejected' then 1 else 0 end) AS rejected_count_30,
+               SUM(case status when 'bounced' then 1 else 0 end) AS bounced_count_30,
+               SUM(case status when 'deferred' then 1 else 0 end) AS deferred_count_30,
+               SUM(case status when 'expired' then 1 else 0 end) AS expired_count_30,
                round(SUM(case status when 'sent' then 1 else 0 end)::numeric *100/count(*), 2) AS sent_30,
                round(SUM(case status when 'rejected' then 1 else 0 end)::numeric *100/count(*), 2) AS rejected_30,
                round(SUM(case status when 'bounced' then 1 else 0 end)::numeric *100/count(*), 2) AS bounced_30,
@@ -102,6 +112,8 @@ class Message < ActiveRecord::Base
   end
 
   def self.users_by_domain(domain, params = {})
+    p params, "AAAAAAAAAAAA"
+    
     last_30_days_end = (DateTime.parse(params[:to]) - 1.days)
     last_30_days_start = last_30_days_end - 30.days
 

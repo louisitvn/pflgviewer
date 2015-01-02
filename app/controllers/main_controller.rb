@@ -1,17 +1,9 @@
 class MainController < ApplicationController
   def index
-    # Default: show data of this month, limit 5 entries
-    d = Date.today
+    args = current_or_default_period
+    args.merge!(start: 0, length: 5)
 
-    args = {
-      from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
-      to: d.at_end_of_month.strftime('%Y/%m/%d'),
-      length: 5,
-      start: 0
-    }
-    
-    # the default values to be overwritten by user custom values
-    args.merge!(params.symbolize_keys)
+    p 'FINAl', args
 
     # for showing on view
     @from = args[:from]
@@ -25,15 +17,7 @@ class MainController < ApplicationController
   end
 
   def domains
-    d = Date.today
-
-    args = {
-      from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
-      to: d.at_end_of_month.strftime('%Y/%m/%d')
-    }
-
-    # the default values to be overwritten by user custom values
-    args.merge!(params.symbolize_keys)
+    args = current_or_default_period
 
     # for showing on view
     @from = args[:from]
@@ -51,15 +35,7 @@ class MainController < ApplicationController
   end
 
   def all
-    d = Date.today
-
-    args = {
-      from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
-      to: d.at_end_of_month.strftime('%Y/%m/%d')
-    }
-
-    # the default values to be overwritten by user custom values
-    args.merge!(params.symbolize_keys)
+    args = current_or_default_period
 
     # for showing on view
     @from = args[:from]
@@ -79,15 +55,7 @@ class MainController < ApplicationController
     @domain = Base64.decode64(params[:base64_domain])
     @domain_encoded = params[:base64_domain]
     
-    d = Date.today
-
-    args = {
-      from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
-      to: d.at_end_of_month.strftime('%Y/%m/%d')
-    }
-
-    # the default values to be overwritten by user custom values
-    args.merge!(params.symbolize_keys)
+    args = current_or_default_period
 
     # for showing on view
     @from = args[:from]
@@ -106,15 +74,7 @@ class MainController < ApplicationController
     @domain = Base64.decode64(params[:base64_domain])
     @domain_encoded = params[:base64_domain]
     
-    d = Date.today
-
-    args = {
-      from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
-      to: d.at_end_of_month.strftime('%Y/%m/%d')
-    }
-
-    # the default values to be overwritten by user custom values
-    args.merge!(params.symbolize_keys)
+    args = current_or_default_period
 
     # for showing on view
     @from = args[:from]
@@ -127,5 +87,20 @@ class MainController < ApplicationController
         render json: { data: data, recordsFiltered: count, recordsTotal: count}
       }
     end
+  end
+  
+  private
+  def current_or_default_period
+    unless session[:args]
+      d = Date.today
+      session[:args] = {
+        from: d.at_beginning_of_month.strftime('%Y/%m/%d'),
+        to: d.at_end_of_month.strftime('%Y/%m/%d')
+      }
+    end
+    
+    session[:args].merge!(params.permit(:from, :to).symbolize_keys)
+
+    return params.symbolize_keys.merge(session[:args].symbolize_keys)
   end
 end
