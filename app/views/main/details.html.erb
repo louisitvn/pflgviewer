@@ -45,6 +45,16 @@
               <li class="active">Recipient Details</li>
             </ol>
           </div>
+          <div class="col-sm-12">
+            <div class="btn-group" role="group" aria-label="...">
+              <button type="button" id="btnStatusAll" class="btn btn-default">All</button>
+              <button type="button" id="btnStatusDelivered" class="btn btn-default">Delivered</button>
+              <button type="button" id="btnStatusDeferred" class="btn btn-default">Deferred</button>
+              <button type="button" id="btnStatusBounced" class="btn btn-default">Bounced</button>
+              <button type="button" id="btnStatusRejected" class="btn btn-default">Rejected</button>
+              <button type="button" id="btnStatusExpired" class="btn btn-default">Expired</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="row">
@@ -174,6 +184,31 @@
     $( "#btnShowDatetimePicker2" ).on( "click", function() {
       $('#datetimepicker2').datepicker( 'show' );
     });
+
+    // Filters
+    $( "#btnStatusAll" ).on( "click", function() {
+      datatable.DataTable().columns(6).search('').draw();
+    });
+
+    $( "#btnStatusDelivered" ).on( "click", function() {
+      datatable.DataTable().columns(6).search('sent').draw();
+    });
+
+    $( "#btnStatusDeferred" ).on( "click", function() {
+      datatable.DataTable().columns(6).search('deferred').draw();
+    });
+
+    $( "#btnStatusBounced" ).on( "click", function() {
+      datatable.DataTable().columns(6).search('bounced').draw();
+    });
+
+    $( "#btnStatusRejected" ).on( "click", function() {
+      datatable.DataTable().columns(6).search('rejected').draw();
+    });
+
+    $( "#btnStatusExpired" ).on( "click", function() {
+      datatable.DataTable().columns(6).search('expired').draw();
+    });
 	});
 </script>
 
@@ -222,7 +257,8 @@
     } );
 
     // load
-    datatable.DataTable().draw();
+    // datatable.DataTable().draw();
+    datatable.DataTable().columns(6).search('<%= @status %>').draw();
 	});
 </script>
 

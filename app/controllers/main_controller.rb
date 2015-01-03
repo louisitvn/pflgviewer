@@ -79,6 +79,7 @@ class MainController < ApplicationController
     # for showing on view
     @from = args[:from]
     @to = args[:to]
+    @status = args[:status]
 
     respond_to do |format|
       format.html {}

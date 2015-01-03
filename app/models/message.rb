@@ -49,6 +49,7 @@ class Message < ActiveRecord::Base
         SELECT msg.recipient_domain
         FROM messages msg
         WHERE msg.status = :status AND #{conditions_from_params(params)}
+          AND msg.recipient_domain IS NOT NULL
         GROUP BY msg.recipient_domain
       ) tmp
     }
@@ -112,8 +113,6 @@ class Message < ActiveRecord::Base
   end
 
   def self.users_by_domain(domain, params = {})
-    p params, "AAAAAAAAAAAA"
-    
     last_30_days_end = (DateTime.parse(params[:to]) - 1.days)
     last_30_days_start = last_30_days_end - 30.days
 
@@ -121,7 +120,7 @@ class Message < ActiveRecord::Base
       SELECT * FROM
       (
         SELECT recipient,
-               COUNT(*) sent,
+               SUM(case coalesce(status, '') when '' then 0 else 1 end) sent,
                SUM(case status when 'sent' then 1 else 0 end) AS delivered,
                SUM(case status when 'rejected' then 1 else 0 end) AS rejected,
                SUM(case status when 'bounced' then 1 else 0 end) AS bounced,
@@ -136,7 +135,7 @@ class Message < ActiveRecord::Base
       
       (
         SELECT recipient,
-               COUNT(*) sent_30,
+               SUM(case coalesce(status, '') when '' then 0 else 1 end) sent_30,
                SUM(case status when 'sent' then 1 else 0 end) AS delivered_30,
                SUM(case status when 'rejected' then 1 else 0 end) AS rejected_30,
                SUM(case status when 'bounced' then 1 else 0 end) AS bounced_30,
@@ -159,18 +158,18 @@ class Message < ActiveRecord::Base
 
   def self.details_by_domain(domain, params = {})
     sql = %Q{
-      SELECT * FROM (
-        SELECT DISTINCT ON(recipient) * 
-        FROM messages
-        WHERE recipient_domain = :domain AND #{conditions_from_params(params)}
-        LIMIT :limit OFFSET :offset
-      ) tmp
+      SELECT * 
+      FROM messages
+      WHERE 
+        status IS NOT NULL AND
+        recipient_domain = :domain AND
+        #{conditions_from_params(params)}
       #{sorts_by_params(params)}
+      LIMIT :limit OFFSET :offset
     }
 
+    count_sql = "SELECT COUNT(DISTINCT recipient) FROM messages WHERE status IS NOT NULL AND recipient_domain = :domain AND #{conditions_from_params(params)}"
 
-
-    count_sql = 'SELECT COUNT(DISTINCT recipient) FROM messages WHERE recipient_domain = :domain'
     data = self.find_by_sql([sql, domain: domain, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
     count = self.count_by_sql([count_sql, domain: domain])
     return data, count
@@ -214,18 +213,24 @@ class Message < ActiveRecord::Base
     params = params.symbolize_keys
     conn = self.connection
 
+    conditions = []
+    
+    # PERIOD CONDITIONS
     if params[:from]
       from = params[:from].is_a?(String) ? DateTime.parse(params[:from]) : params[:from]
       if params[:to]
         to = params[:to].is_a?(String) ? DateTime.parse(params[:to]) + 1.days : params[:to]
-        conditions = "datetime >= #{conn.quote(from)} AND datetime < #{conn.quote(to)}"
+        conditions << "datetime >= #{conn.quote(from)} AND datetime < #{conn.quote(to)}"
       else
-        conditions = "datetime >= #{conn.quote(from)}"
+        conditions << "datetime >= #{conn.quote(from)}"
       end
-    else
-      conditions = "TRUE"
     end
-    p "CONDITIONS***********", conditions
-    return conditions
+
+    # COLUMN SEARCH CONDITIONS
+    if params[:columns]
+      conditions << params[:columns].select{|k,v| !v['search']['value'].blank? }.map{|k,v| "#{v['name']} = #{conn.quote(v['search']['value'])}" }.join(' AND ')
+    end
+
+    return conditions.reject(&:blank?).uniq.join(" AND ")
   end
 end
