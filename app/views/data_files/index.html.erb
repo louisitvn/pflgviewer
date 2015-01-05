@@ -1,0 +1,36 @@
+    <div class="container-fluid">
+      <div style="margin:20px 0 20px">
+        <h1>Download</h1>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <table class="display table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Download</th>
+                <th></th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% @data_files.each do |data_file| %>
+                <tr>
+                  <td><%= data_file.created_at.strftime('%y/%m/%d %H:%M') %></td>
+                  <td><%= data_file.name %></td>
+                  <td><%= data_file.description %></td>
+                  <td><%= data_file.status %></td>
+                  <td><%= data_file.downloadable? ? link_to('Download', data_file_download_path(data_file)) : 'Please wait' %></td>
+                  <td><%= link_to 'Destroy', data_file, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<!-- <%= link_to 'New Data file', new_data_file_path %> -->

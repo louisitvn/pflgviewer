@@ -11,14 +11,57 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 0) do
+ActiveRecord::Schema.define(version: 20150103163436) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
+  create_table "data_files", force: true do |t|
+    t.string   "name"
+    t.string   "path"
+    t.text     "description"
+    t.string   "status"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "delayed_jobs", force: true do |t|
+    t.integer  "priority",   default: 0, null: false
+    t.integer  "attempts",   default: 0, null: false
+    t.text     "handler",                null: false
+    t.text     "last_error"
+    t.datetime "run_at"
+    t.datetime "locked_at"
+    t.datetime "failed_at"
+    t.string   "locked_by"
+    t.string   "queue"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "delayed_jobs", ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
+
+  create_table "messages", force: true do |t|
+    t.string   "number"
+    t.integer  "size"
+    t.string   "relay"
+    t.string   "sender"
+    t.string   "sender_domain"
+    t.string   "recipient"
+    t.string   "recipient_domain"
+    t.string   "status"
+    t.text     "status_message"
+    t.string   "status_code"
+    t.datetime "datetime"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
   create_table "recipients", force: true do |t|
     t.string   "number"
     t.string   "recipient"
+    t.string   "sender"
+    t.string   "sender_domain"
     t.string   "domain"
     t.string   "status"
     t.datetime "datetime"

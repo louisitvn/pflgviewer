@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  resources :data_files
+  get 'data_files/:id/download' => 'data_files#download', as: :data_file_download
+
   get 'main/index'
 
   resources :messages
@@ -7,6 +10,10 @@ Rails.application.routes.draw do
     collection do 
       get 'index'
       get 'all'
+      get 'all_export'
+      get 'domains_export'
+      get 'users_export'
+      get 'details_export'
     end
   end
 

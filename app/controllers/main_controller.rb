@@ -16,6 +16,12 @@ class MainController < ApplicationController
     @dommain_by_rejected, count = Message.domain_by('rejected', args)
   end
 
+  def domains_export
+    args = current_or_default_period
+    Message.delay.domains_export(params[:status], args)
+    render json: {status: 'ok'}
+  end
+
   def domains
     args = current_or_default_period
 
@@ -34,6 +40,12 @@ class MainController < ApplicationController
     end
   end
 
+  def all_export
+    args = current_or_default_period
+    Message.delay.all_export(args)
+    render json: {status: 'ok'}
+  end
+
   def all
     args = current_or_default_period
 
@@ -45,10 +57,16 @@ class MainController < ApplicationController
       format.html {}
       format.json {
         data, count = Message.domain_statistics(args)
-
         render json: { data: data, recordsFiltered: count, recordsTotal: count}
       }
     end
+  end
+
+  def users_export
+    domain = Base64.decode64(params[:base64_domain])
+    args = current_or_default_period
+    Message.delay.users_export(domain, args)
+    render json: {status: 'ok'}
   end
 
   def users
@@ -68,6 +86,13 @@ class MainController < ApplicationController
         render json: { data: data, recordsFiltered: count, recordsTotal: count}
       }
     end
+  end
+
+  def details_export
+    domain = Base64.decode64(params[:base64_domain])
+    args = current_or_default_period
+    Message.delay.details_export(domain, args)
+    render json: {status: 'ok'}
   end
 
   def details

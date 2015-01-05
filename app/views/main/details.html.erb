@@ -244,8 +244,7 @@
           }
         },
         { "name": "relay", "title": "Recipient Server",  "data": "relay" },
-        { "name": "datetime", "title": "Date", "data": function(row) { return moment(row.datetime).format('YYYY-MM-DD'); } },
-        { "name": "datetime", "orderable": false, "title": "Time", "data": function(row) { return moment(row.datetime).format('HH:MM'); } },
+        { "name": "datetime", "title": "Date", "data": function(row) { return moment(row.datetime).format('YYYY-MM-DD HH:MM'); } },
         { "name": "status_code", "title": "Status Code",  "data": "status_code" },
         { "name": "status_message", "title": "Server Response",  "data": "status_message" },
         { "name": "status", "title": "Delivery Status",  "data": "status" }

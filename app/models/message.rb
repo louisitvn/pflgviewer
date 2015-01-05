@@ -1,5 +1,6 @@
 require 'sql_helper'
 require 'parser'
+require 'csv'
 
 class Message < ActiveRecord::Base
   extend SqlHelper
@@ -11,6 +12,112 @@ class Message < ActiveRecord::Base
   def self.load(file)
     messages = PostfixLogParser.load(File.join(Rails.root, 'mail.log'))
     Message.execute_db_update!(messages)
+  end
+
+  def self.users_export(domain, args)
+    filename = "Domain-Users-Summary-#{Time.now.to_i}.csv"
+    filepath = File.join(Rails.root, filename)
+    
+    datafile = DataFile.create(name: filename, description: 'Domain Statistics', status: DataFile::IN_PROGRESS, path: filepath)
+
+    CSV.open(filepath, 'w') do |csv|
+      headers = [
+        'Recipient', 'Sent', 'Deliverred', 'Bounced', 'Success Rage', 'Sent (last 30 days)', 'Deliverred (last 30 days)', 'Bounced (last 30 days)', 'Success Rage (last 30 days)'
+      ]
+
+      csv << headers
+
+      each_page(20, :users_by_domain, *[domain, args]) { |data|
+        data.each do |item|
+          csv << [
+            item.recipient, item.sent, item.delivered, item.bounced, item.success_rate, item.sent_30, item.delivered_30, item.bounced_30, item.success_rate_30
+          ]
+        end
+        sleep 1
+      }
+    end
+
+    datafile.update_attributes(status: DataFile::DONE)
+  end
+
+  def self.details_export(domain, args)
+    filename = "Domain-Users-Details-#{Time.now.to_i}.csv"
+    filepath = File.join(Rails.root, filename)
+    
+    datafile = DataFile.create(name: filename, description: 'Domain Statistics', status: DataFile::IN_PROGRESS, path: filepath)
+
+    CSV.open(filepath, 'w') do |csv|
+      headers = [
+        'Recipient', 'Recipient Server', 'Time', 'Status Code', 'Server Response', 'Delivery Status'
+      ]
+
+      csv << headers
+
+      each_page(20, :details_by_domain, *[domain, args]) { |data|
+        data.each do |item|
+          csv << [
+            item.recipient, item.relay, item.datetime, item.status_code, item.status_message, item.status
+          ]
+        end
+        sleep 1
+      }
+    end
+
+    datafile.update_attributes(status: DataFile::DONE)
+  end
+
+  def self.all_export(args)
+    filename = "Domains-Statistics-#{Time.now.to_i}.csv"
+    filepath = File.join(Rails.root, filename)
+    
+    datafile = DataFile.create(name: filename, description: 'Domain Statistics', status: DataFile::IN_PROGRESS, path: filepath)
+
+    CSV.open(filepath, 'w') do |csv|
+      headers = [
+        'Domain', 'Delivered', 'Deferred', 'Bounced', 'Rejected', 'Expired', 'Domain', 'Delivered (last 30 days)', 'Deferred (last 30 days)', 'Bounced (last 30 days)', 'Rejected (last 30 days)', 'Expired (last 30 days)'
+      ]
+
+      csv << headers
+
+      each_page(20, :domain_statistics, args) { |data|
+        data.each do |item|
+          csv << [
+            item.recipient_domain, 
+            "#{item.sent}(#{item.sent_count})", "#{item.deferred}(#{item.deferred_count})", "#{item.bounced}(#{item.bounced_count})", "#{item.rejected}(#{item.rejected_count})", "#{item.expired}(#{item.expired_count})",
+            "#{item.sent_30}(#{item.sent_count_30})", "#{item.deferred_30}(#{item.deferred_count_30})", "#{item.bounced_30}(#{item.bounced_count_30})", "#{item.rejected_30}(#{item.rejected_count_30})", "#{item.expired_30}(#{item.expired_count_30})",
+          ]
+        end
+        sleep 1
+      }
+    end
+
+    datafile.update_attributes(status: DataFile::DONE)
+  end
+
+  def self.domains_export(status, args)
+    filename = "Domains-By-#{status.capitalize}-#{Time.now.to_i}.csv"
+    filepath = File.join(Rails.root, filename)
+    
+    datafile = DataFile.create(name: filename, description: 'Domain Statistics', status: DataFile::IN_PROGRESS, path: filepath)
+
+    CSV.open(filepath, 'w') do |csv|
+      headers = [
+        'Domain', '%', 'Volume', '% Change'
+      ]
+
+      csv << headers
+
+      each_page(20, :domain_by, *[status, args]) { |data|
+        data.each do |item|
+          csv << [
+            item.domain, item.percentage, item.volume, item.change
+          ]
+        end
+        sleep 1
+      }
+    end
+
+    datafile.update_attributes(status: DataFile::DONE)
   end
 
   # why bother joining messages table, the recipients alone is not enough?
@@ -168,7 +275,7 @@ class Message < ActiveRecord::Base
       LIMIT :limit OFFSET :offset
     }
 
-    count_sql = "SELECT COUNT(DISTINCT recipient) FROM messages WHERE status IS NOT NULL AND recipient_domain = :domain AND #{conditions_from_params(params)}"
+    count_sql = "SELECT COUNT(*) FROM messages WHERE status IS NOT NULL AND recipient_domain = :domain AND #{conditions_from_params(params)}"
 
     data = self.find_by_sql([sql, domain: domain, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
     count = self.count_by_sql([count_sql, domain: domain])
@@ -193,9 +300,6 @@ class Message < ActiveRecord::Base
     rescue Exception => ex
       
     end
-
-    p params, "SORRRRRRRRRRRRRRRRRRRRRRRRRR"
-    p sort_by
 
     if sort_by and sort_order
       "ORDER BY #{sort_by} #{sort_order}" 
@@ -232,5 +336,26 @@ class Message < ActiveRecord::Base
     end
 
     return conditions.reject(&:blank?).uniq.join(" AND ")
+  end
+
+  def self.each_page(size, method, *args)
+    _args = args
+    _args.last.merge!(start: 0, length: 0)
+
+    # just send a fake request to compute the total page
+    data, count = self.send(method, *_args)
+
+    # iterate through pages
+    (0..count-1).to_a.each_slice(size){ |a|
+      p "Scraping page", a
+      start = a.first
+      length = size
+      _args.last.merge!(start: start, length: length)
+      
+      
+      data, count = self.send(method, *_args )
+      yield data
+    }
+    
   end
 end
