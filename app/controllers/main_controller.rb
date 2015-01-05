@@ -3,8 +3,6 @@ class MainController < ApplicationController
     args = current_or_default_period
     args.merge!(start: 0, length: 5)
 
-    p 'FINAl', args
-
     # for showing on view
     @from = args[:from]
     @to = args[:to]
@@ -18,8 +16,9 @@ class MainController < ApplicationController
 
   def domains_export
     args = current_or_default_period
-    Message.delay.domains_export(params[:status], args)
-    render json: {status: 'ok'}
+    
+    Message.domains_export(params[:status], args)
+    redirect_to data_files_path
   end
 
   def domains
@@ -42,8 +41,8 @@ class MainController < ApplicationController
 
   def all_export
     args = current_or_default_period
-    Message.delay.all_export(args)
-    render json: {status: 'ok'}
+    Message.all_export(args)
+    redirect_to data_files_path
   end
 
   def all
@@ -65,8 +64,8 @@ class MainController < ApplicationController
   def users_export
     domain = Base64.decode64(params[:base64_domain])
     args = current_or_default_period
-    Message.delay.users_export(domain, args)
-    render json: {status: 'ok'}
+    Message.users_export(domain, args)
+    redirect_to data_files_path
   end
 
   def users
@@ -91,8 +90,8 @@ class MainController < ApplicationController
   def details_export
     domain = Base64.decode64(params[:base64_domain])
     args = current_or_default_period
-    Message.delay.details_export(domain, args)
-    render json: {status: 'ok'}
+    Message.details_export(domain, args)
+    redirect_to data_files_path
   end
 
   def details

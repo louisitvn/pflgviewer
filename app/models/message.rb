@@ -16,11 +16,13 @@ class Message < ActiveRecord::Base
 
   def self.users_export(domain, args)
     filename = "Domain-Users-Summary-#{Time.now.to_i}.csv"
-    filepath = File.join(Rails.root, filename)
-    
-    datafile = DataFile.create(name: filename, description: 'Domain Statistics', status: DataFile::IN_PROGRESS, path: filepath)
+    filepath = File.join(Rails.root, 'tmp', filename)
+    datafile = DataFile.create(name: filename, description: "Domain Users Statistics (#{domain})", status: DataFile::IN_PROGRESS, path: filepath)
+    self.delay.users_export_delayed(datafile, domain, args)
+  end
 
-    CSV.open(filepath, 'w') do |csv|
+  def self.users_export_delayed(datafile, domain, args)
+    CSV.open(datafile.path, 'w') do |csv|
       headers = [
         'Recipient', 'Sent', 'Deliverred', 'Bounced', 'Success Rage', 'Sent (last 30 days)', 'Deliverred (last 30 days)', 'Bounced (last 30 days)', 'Success Rage (last 30 days)'
       ]
@@ -33,7 +35,6 @@ class Message < ActiveRecord::Base
             item.recipient, item.sent, item.delivered, item.bounced, item.success_rate, item.sent_30, item.delivered_30, item.bounced_30, item.success_rate_30
           ]
         end
-        sleep 1
       }
     end
 
@@ -42,11 +43,13 @@ class Message < ActiveRecord::Base
 
   def self.details_export(domain, args)
     filename = "Domain-Users-Details-#{Time.now.to_i}.csv"
-    filepath = File.join(Rails.root, filename)
-    
-    datafile = DataFile.create(name: filename, description: 'Domain Statistics', status: DataFile::IN_PROGRESS, path: filepath)
-
-    CSV.open(filepath, 'w') do |csv|
+    filepath = File.join(Rails.root, 'tmp', filename)
+    datafile = DataFile.create(name: filename, description: "Domain User Details (#{domain})", status: DataFile::IN_PROGRESS, path: filepath)
+    self.delay.details_export_delayed(datafile, domain, args)
+  end
+  
+  def self.details_export_delayed(datafile, domain, args)
+    CSV.open(datafile.path, 'w') do |csv|
       headers = [
         'Recipient', 'Recipient Server', 'Time', 'Status Code', 'Server Response', 'Delivery Status'
       ]
@@ -59,7 +62,6 @@ class Message < ActiveRecord::Base
             item.recipient, item.relay, item.datetime, item.status_code, item.status_message, item.status
           ]
         end
-        sleep 1
       }
     end
 
@@ -68,15 +70,14 @@ class Message < ActiveRecord::Base
 
   def self.all_export(args)
     filename = "Domains-Statistics-#{Time.now.to_i}.csv"
-    filepath = File.join(Rails.root, filename)
-    
+    filepath = File.join(Rails.root, 'tmp', filename)
     datafile = DataFile.create(name: filename, description: 'Domain Statistics', status: DataFile::IN_PROGRESS, path: filepath)
+    self.delay.all_export_delayed(datafile, args)
+  end
 
-    CSV.open(filepath, 'w') do |csv|
-      headers = [
-        'Domain', 'Delivered', 'Deferred', 'Bounced', 'Rejected', 'Expired', 'Domain', 'Delivered (last 30 days)', 'Deferred (last 30 days)', 'Bounced (last 30 days)', 'Rejected (last 30 days)', 'Expired (last 30 days)'
-      ]
-
+  def self.all_export_delayed(datafile, args)
+    CSV.open(datafile.path, 'w') do |csv|
+      headers = [ 'Domain', 'Delivered', 'Deferred', 'Bounced', 'Rejected', 'Expired', 'Domain', 'Delivered (last 30 days)', 'Deferred (last 30 days)', 'Bounced (last 30 days)', 'Rejected (last 30 days)', 'Expired (last 30 days)' ]
       csv << headers
 
       each_page(20, :domain_statistics, args) { |data|
@@ -87,7 +88,6 @@ class Message < ActiveRecord::Base
             "#{item.sent_30}(#{item.sent_count_30})", "#{item.deferred_30}(#{item.deferred_count_30})", "#{item.bounced_30}(#{item.bounced_count_30})", "#{item.rejected_30}(#{item.rejected_count_30})", "#{item.expired_30}(#{item.expired_count_30})",
           ]
         end
-        sleep 1
       }
     end
 
@@ -96,15 +96,14 @@ class Message < ActiveRecord::Base
 
   def self.domains_export(status, args)
     filename = "Domains-By-#{status.capitalize}-#{Time.now.to_i}.csv"
-    filepath = File.join(Rails.root, filename)
-    
-    datafile = DataFile.create(name: filename, description: 'Domain Statistics', status: DataFile::IN_PROGRESS, path: filepath)
+    filepath = File.join(Rails.root, 'tmp', filename)
+    datafile = DataFile.create(name: filename, description: "Domains by #{status.upcase}", status: DataFile::IN_PROGRESS, path: filepath)
+    self.delay.domains_export_delayed(datafile, status, args)
+  end
 
-    CSV.open(filepath, 'w') do |csv|
-      headers = [
-        'Domain', '%', 'Volume', '% Change'
-      ]
-
+  def self.domains_export_delayed(datafile, status, args)
+    CSV.open(datafile.path, 'w') do |csv|
+      headers = [   'Domain', '%', 'Volume', '% Change'  ]
       csv << headers
 
       each_page(20, :domain_by, *[status, args]) { |data|
@@ -113,7 +112,6 @@ class Message < ActiveRecord::Base
             item.domain, item.percentage, item.volume, item.change
           ]
         end
-        sleep 1
       }
     end
 
@@ -263,6 +261,7 @@ class Message < ActiveRecord::Base
     return data, count
   end
 
+  
   def self.details_by_domain(domain, params = {})
     sql = %Q{
       SELECT * 

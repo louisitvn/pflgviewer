@@ -35,13 +35,19 @@
               <button id="btnThisMonth" type="button" class="btn btn-default">This Month</button>
               <button id="btnLastMonth" type="button" class="btn btn-default">Last Month</button>
             </div>
+
+            <div class="btn-group" role="group" aria-label="...">
+              <button id='btnExport' type="button" class="btn btn-default" aria-label="Left Align">
+                <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Download CSV
+              </button>
+            </div>
           </div>
         </div>
         <div class="row">
           <div class="col-sm-12">
             <ol class="breadcrumb" style="margin-top: 20px">
               <li><a href="/">Home</a></li>
-              <li class="active"><%= link_to @domain, users_by_domain_path(base65_domain: @encoded_domain) %></li>
+              <li class="active"><%= link_to @domain, users_by_domain_path(base64_domain: @domain_encoded) %></li>
               <li class="active">Recipient Details</li>
             </ol>
           </div>
@@ -186,28 +192,39 @@
     });
 
     // Filters
+    // @todo replace column number with column name!!!!!!
     $( "#btnStatusAll" ).on( "click", function() {
-      datatable.DataTable().columns(6).search('').draw();
+      current_status = '';
+      datatable.DataTable().columns(5).search('').draw();
     });
 
     $( "#btnStatusDelivered" ).on( "click", function() {
-      datatable.DataTable().columns(6).search('sent').draw();
+      current_status = 'sent';
+      datatable.DataTable().columns(5).search('sent').draw();
     });
 
     $( "#btnStatusDeferred" ).on( "click", function() {
-      datatable.DataTable().columns(6).search('deferred').draw();
+      current_status = 'deferred';
+      datatable.DataTable().columns(5).search('deferred').draw();
     });
 
     $( "#btnStatusBounced" ).on( "click", function() {
-      datatable.DataTable().columns(6).search('bounced').draw();
+      current_status = 'bounced';
+      datatable.DataTable().columns(5).search('bounced').draw();
     });
 
     $( "#btnStatusRejected" ).on( "click", function() {
-      datatable.DataTable().columns(6).search('rejected').draw();
+      current_status = 'rejected';
+      datatable.DataTable().columns(5).search('rejected').draw();
     });
 
     $( "#btnStatusExpired" ).on( "click", function() {
-      datatable.DataTable().columns(6).search('expired').draw();
+      current_status = 'expired';
+      datatable.DataTable().columns(5).search('expired').draw();
+    });
+
+    $( "#btnExport" ).on( "click", function() {
+      window.location = "<%= details_export_path(base64_domain: @domain_encoded) %>?status=" + current_status;
     });
 	});
 </script>
@@ -215,6 +232,7 @@
 <script>
   // Global
   var datatable;
+  var current_status = '<%= @status %>';
 
 	jQuery(document).ready(function() {
     // Init DataTable
@@ -257,7 +275,7 @@
 
     // load
     // datatable.DataTable().draw();
-    datatable.DataTable().columns(6).search('<%= @status %>').draw();
+    datatable.DataTable().columns(5).search('<%= @status %>').draw();
 	});
 </script>
 

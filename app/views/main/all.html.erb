@@ -37,7 +37,7 @@
             </div>
 
             <div class="btn-group" role="group" aria-label="...">
-              <button type="button" class="btn btn-default" aria-label="Left Align">
+              <button id='btnExport' type="button" class="btn btn-default" aria-label="Left Align">
                 <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Download CSV
               </button>
             </div>
@@ -170,6 +170,10 @@
 
     $( "#btnShowDatetimePicker2" ).on( "click", function() {
       $('#datetimepicker2').datepicker( 'show' );
+    });
+
+    $( "#btnExport" ).on( "click", function() {
+      window.location = "<%= all_export_main_index_path %>";
     });
 	});
 </script>

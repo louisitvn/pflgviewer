@@ -35,6 +35,12 @@
               <button id="btnThisMonth" type="button" class="btn btn-default">This Month</button>
               <button id="btnLastMonth" type="button" class="btn btn-default">Last Month</button>
             </div>
+
+            <div id='btnExport' class="btn-group" role="group" aria-label="...">
+              <button type="button" class="btn btn-default" aria-label="Left Align">
+                <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Download CSV
+              </button>
+            </div>
           </div>
         </div>
         <div class="row">
@@ -173,6 +179,10 @@
 
     $( "#btnShowDatetimePicker2" ).on( "click", function() {
       $('#datetimepicker2').datepicker( 'show' );
+    });
+
+    $( "#btnExport" ).on( "click", function() {
+      window.location = "<%= users_export_path(base64_domain: @domain_encoded) %>";
     });
 	});
 </script>

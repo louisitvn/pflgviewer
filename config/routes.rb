@@ -11,15 +11,20 @@ Rails.application.routes.draw do
       get 'index'
       get 'all'
       get 'all_export'
-      get 'domains_export'
-      get 'users_export'
-      get 'details_export'
+      # get 'domains_export'
+      # get 'users_export'
+      # get 'details_export'
     end
   end
 
   get 'main/domains/:status' => 'main#domains', as: :domains_by_status # danh sách domain by status
   get 'main/users/:base64_domain' => 'main#users', as: :users_by_domain # danh sách user by domain
   get 'main/details/:base64_domain' => 'main#details', as: :details_by_domain
+  #get 'main/all_export' => 'main#all_export', as: :all_export
+  get 'main/domains_export/:status' => 'main#domains_export', as: :domain_export
+  get 'main/users_export/:base64_domain' => 'main#users_export', as: :users_export
+  get 'main/details_export/:base64_domain' => 'main#details_export', as: :details_export
+
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
