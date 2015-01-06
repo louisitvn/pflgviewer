@@ -1,15 +1,199 @@
+#!/bin/env ruby
 require 'date'
+require 'time'
+require 'optparse'
+require 'sqlite3'
+require 'rubygems'
+require 'active_record'
+require 'mechanize'
+
+$options = {}
+parser = OptionParser.new("", 24) do |opts|
+  opts.banner = "Postfix Log Parser\n\n"
+
+  opts.on("-p", "--path PATH", "Path to the directory containing the log files (/var/log/ for example)") do |v|
+    $options[:path] = v
+  end
+
+  opts.on("-n", "--name FILENAME", "Primary file name (mail.log for example)") do |v|
+    $options[:name] = v
+  end
+
+  opts.on("-l", "--log LOG", "") do |v|
+    $options[:log] = v
+  end
+
+  opts.on("--block-size SIZE", "") do |v|
+    $options[:block_size] = v
+  end
+
+  opts.on_tail('-h', '--help', 'Displays this help') do
+		puts opts
+    exit
+	end
+end
+
+
+# Input Validation
+parser.parse!
+
+if $options[:path].nil?
+  puts "\nPlease specify path: -p\n\n"
+  exit
+end
+
+if !File.exists?($options[:path])
+  puts "Path #{$options[:path]} does not exist"
+end
+
+if $options[:name].nil?
+  puts "\nPlease specify file name: -n\n\n"
+  exit
+end
+
+$options[:log] ||= '/tmp/pflgparser.log'
+
+$logger = Logger.new($options[:log])
+
+$options[:block_size] ||= 10000
+$options[:block_size] = $options[:block_size].to_i
+
+raise "DATABASE_URL not set" unless ENV['DATABASE_URL']
+
+# Establish connections
+ActiveRecord::Base.establish_connection(
+  ENV['DATABASE_URL']
+)
+
+module SqlHelper
+  SQL_BATCH_SIZE = $options[:block_size]
+  
+  def execute_db_update!(objects)
+    @last_executed_at = Time.now
+    unless objects.is_a? Array
+      raise 'The input objects must be an array of ActiveRecord::Base objects or hashes'
+    end
+    
+    return nil if objects.blank?
+
+    $logger.info "#{objects.size} message(s) loaded"
+    t = Time.now
+    sql_strs = ["BEGIN"]
+    last_index = objects.size - 1
+    objects.each_with_index{|obj, index|
+      sql_strs << self.to_sql(obj)
+      if ( (index + 1) % SQL_BATCH_SIZE == 0) || (index == last_index)
+        sql_strs << "COMMIT;"
+        self.connection.execute(sql_strs.join(";"))
+        sql_strs = ["BEGIN"]
+      end
+    }
+
+    $logger.info "execution time: #{Time.now - t}"
+    @last_executed_at
+  end
+
+  # object can be a Hash object or a ActiveRecord::Base object
+  def to_sql(object, table_name = self.quoted_table_name)
+    return object.to_sql if object.is_a? ActiveRecord::Base
+    # else object is a hash, build sql string
+    if object['id'].blank? && object[:id].blank?
+      object.delete(:id)
+      object.delete('id')
+      to_sql_insert(object, table_name = self.quoted_table_name)
+    else
+      object['id'] = object[:id] unless object['id']
+      object.delete(:id)
+      to_sql_update(object, table_name = self.quoted_table_name)
+    end
+  end
+
+  def to_sql_insert(attrs, table_name = self.quoted_table_name)
+    return '' if attrs.blank?
+    con = self.connection
+    fields = []
+    values = []
+
+    attrs.each do |attr, value|
+      col =  self.columns_hash[attr.to_s]
+      next unless col
+      fields << "\"#{attr}\""
+      values << con.quote(value, col)
+    end
+
+    ['created_at', 'updated_at'].each do |f|
+      if self.columns_hash.has_key?(f)
+        fields << "\"#{f}\""
+        values << con.quote(@last_executed_at, self.columns_hash[f])
+      end
+    end
+    "INSERT INTO #{table_name} (#{fields.join(',')}) VALUES(#{values.join(',')})"
+  end
+
+  #Generate SQL Update statement
+  def to_sql_update(attrs,  table_name = self.quoted_table_name)
+    return '' if attrs['id'].blank?
+    id = attrs.delete('id')
+    return '' if attrs.blank?
+
+    con = self.connection
+    fields = []
+    attrs.each do |attr, value|
+      col =  self.columns_hash[attr.to_s]
+      next unless col
+      fields << "\"#{attr}\"=#{con.quote(value, col)}"
+    end
+
+    updated_at_col = self.columns_hash['updated_at']
+    fields << "\"updated_at\"=#{con.quote(@last_executed_at, updated_at_col)}" if updated_at_col
+
+    key_col = self.columns_hash[self.primary_key]
+    key_value = con.quote(id, key_col)
+
+    "UPDATE #{table_name} SET #{fields.join(",")} WHERE #{key_col.name}=#{key_value}"
+  end
+
+end
+
+class Message < ActiveRecord::Base
+  extend SqlHelper
+end
 
 class PostfixLogParser
   NOQUEUE = 'NOQUEUE'
 
-  def self.load(file)
-    messages = []
+  def self.run
+    $logger.info('-------------------------------------------')
+    $logger.info('START')
+    lasttime = Message.maximum(:datetime)
+    # Check for every log file mail.log.1, mail.log.2, etc... until there is an entry that is 
+    (1..100).to_a.map{|e| ".#{e}"}.insert(0, "").each do |i|
+      fullpath = File.join($options[:path], $options[:name] + i.to_s)
+      break unless File.exists?(fullpath)
 
-    File.readlines(file).each_with_index do |line, index|
-      number = extract_id(line)
+      $logger.info "Scaning #{fullpath}"
+
+      result = load(fullpath, lasttime)
+      break if result == false # stop at this file
+    end
+    $logger.info('DONE')
+    $logger.info('-------------------------------------------')
+  end
+
+  def self.load(fullpath, lasttime = nil)
+    messages = []
+    
+    file = File.open(fullpath, 'r')
+    while !file.eof?
+      line = file.readline
+
+      datetime = Time.parse(line[0..14])
+
+      # stop at this file if any line of the file is already imported
+      return false if lasttime and datetime < lasttime
 
       msg = {}
+      number = extract_id(line)
       
       # dòng nào không có ID thì ignore
       # For example, just ignore the following
@@ -26,7 +210,7 @@ class PostfixLogParser
       msg[:sender_domain] = msg[:sender] ? msg[:sender][/(?<=@).*/] : nil
       msg[:recipient] = extract_email(line, 'to')
       msg[:recipient_domain] = msg[:recipient][/(?<=@).*/] if msg[:recipient]
-      msg[:datetime] = DateTime.parse(line[0..14])
+      msg[:datetime] = datetime
       msg[:status_code] = line[/(?<=[\( ])[0-9]{3}(?= )/]
       msg[:relay] = line[/(?<=relay=)[a-zA-Z0-9\-_\.]+/]
 
@@ -41,7 +225,7 @@ class PostfixLogParser
       messages << msg
     end
     
-    return messages
+    Message.execute_db_update!(messages)
   end
   
   # helper
@@ -59,5 +243,4 @@ class PostfixLogParser
   end
 end
 
-# a,b = PostfixLogParser.load('/home/nghi/mail.log')
-
+PostfixLogParser.run

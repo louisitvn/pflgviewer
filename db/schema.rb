@@ -60,8 +60,6 @@ ActiveRecord::Schema.define(version: 20150103163436) do
   create_table "recipients", force: true do |t|
     t.string   "number"
     t.string   "recipient"
-    t.string   "sender"
-    t.string   "sender_domain"
     t.string   "domain"
     t.string   "status"
     t.datetime "datetime"

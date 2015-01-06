@@ -4,7 +4,6 @@ require 'csv'
 
 class Message < ActiveRecord::Base
   extend SqlHelper
-  has_many :recipients, :primary_key => :number, :foreign_key => :number
 
   DEFAULT_LIMIT = 20
   DEFAULT_OFFSET = 0
