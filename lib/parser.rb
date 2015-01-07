@@ -170,7 +170,7 @@ class PostfixLogParser
       fullpath = File.join($options[:path], $options[:name] + i.to_s)
       break unless File.exists?(fullpath)
 
-      $logger.info "Scaning #{fullpath}"
+      $logger.info "Scanning #{fullpath}"
 
       result = load(fullpath, lasttime)
       break if result == false # stop at this file
