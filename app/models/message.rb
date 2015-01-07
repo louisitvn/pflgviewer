@@ -124,7 +124,7 @@ class Message < ActiveRecord::Base
     # @todo Khi count phải bỏ mấy thằng null!!!!!!!!!
 
     sql = %Q{
-      SELECT t1.*, t2.*, (percentage-percentage_30) AS change FROM
+      SELECT t1.*, t2.volume_30, t2.percentage_30, (percentage-percentage_30) AS change FROM
       (
         SELECT msg.recipient_domain AS domain, count(msg.id) as volume, round(count(*)::numeric * 100 / (select count(*) FROM messages), 2) as percentage
         FROM messages msg
