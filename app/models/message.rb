@@ -1,5 +1,4 @@
 require 'sql_helper'
-require 'parser'
 require 'csv'
 
 class Message < ActiveRecord::Base

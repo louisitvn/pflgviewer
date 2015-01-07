@@ -2,7 +2,6 @@
 require 'date'
 require 'time'
 require 'optparse'
-require 'sqlite3'
 require 'rubygems'
 require 'active_record'
 require 'mechanize'
