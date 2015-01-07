@@ -270,7 +270,7 @@ class Message < ActiveRecord::Base
       #{sorts_by_params(params)}
     }
 
-    count_sql = 'SELECT COUNT(*) FROM (SELECT DISTINCT recipient FROM messages WHERE recipient_domain = :domain) tmp'
+    count_sql = "SELECT COUNT(*) FROM (SELECT DISTINCT recipient FROM messages WHERE recipient_domain = :domain AND #{conditions_from_params(params)}) tmp"
     data = self.find_by_sql([sql, domain: domain, limit: params[:length] || DEFAULT_LIMIT, offset: params[:start] || DEFAULT_OFFSET ])
     count = self.count_by_sql([count_sql, domain: domain])
     return data, count
