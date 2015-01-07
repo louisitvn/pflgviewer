@@ -32,7 +32,7 @@ RAILS_ENV=production rake db:migrate
 ```
 The above commands will look for the database configured under the `production` (specified by RAILS_ENV environment variable) section of the `database.yml` file and populate it with initial stuffs.
 
-#### Start the Start the webapp's daemon process
+#### Start the webapp's daemon process
 We use a daemon process to facilitate data download. The daemon can be started by
 ```sh
 RAILS_ENV=production ruby bin/delayed_job start
