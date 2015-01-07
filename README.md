@@ -25,12 +25,13 @@ Then install Rails and the related stuffs:
 bundle install
 ```
 #### Initiate the database
-Open the `[source]/config/database.yml` file and change the PostgreSQL parameters appropriately
-Run the database initialization scripts
+Open the `[source]/config/database.yml` file and change the PostgreSQL parameters appropriately. Make sure you update the `production:` section correctly since we are going to start the webapp in production mode. Then run the database initialization scripts:
 ```sh
 RAILS_ENV=production rake db:create
 RAILS_ENV=production rake db:migrate
 ```
+The above commands will look for the database configured under the `production` (specified by RAILS_ENV environment variable) section of the `database.yml` file and populate it with initial stuffs.
+
 #### Start the Start the webapp's daemon process
 We use a daemon process to facilitate data download. The daemon can be started by
 ```sh
