@@ -188,7 +188,7 @@ class Message < ActiveRecord::Base
       
       LEFT JOIN 
       (
-        SELECT recipient_domain,
+        SELECT recipient_domain AS recipient_domain_30,
                SUM(case status when 'sent' then 1 else 0 end) AS sent_count_30,
                SUM(case status when 'rejected' then 1 else 0 end) AS rejected_count_30,
                SUM(case status when 'bounced' then 1 else 0 end) AS bounced_count_30,
@@ -205,7 +205,7 @@ class Message < ActiveRecord::Base
         LIMIT :limit OFFSET :offset
       ) t2 
       
-      ON t1.recipient_domain = t2.recipient_domain
+      ON t1.recipient_domain = t2.recipient_domain_30
       #{sorts_by_params(params)}
     }
 
