@@ -167,7 +167,18 @@ class Message < ActiveRecord::Base
     last_30_days_start = last_30_days_end - 30.days
 
     sql = %Q{
-      SELECT * FROM
+      SELECT t1.*,
+              coalesce(sent_count_30, 0) AS sent_count_30,
+              coalesce(rejected_count_30, 0) AS rejected_count_30,
+              coalesce(bounced_count_30, 0) AS bounced_count_30,
+              coalesce(deferred_count_30, 0) AS deferred_count_30,
+              coalesce(expired_count_30, 0) AS expired_count_30,
+              coalesce(sent_30, 0) AS sent_30,
+              coalesce(rejected_30, 0) AS rejected_30,
+              coalesce(bounced_30, 0) AS bounced_30,
+              coalesce(deferred_30, 0) AS deferred_30,
+              coalesce(expired_30, 0) AS expired_30
+      FROM
       (
         SELECT recipient_domain,
                SUM(case status when 'sent' then 1 else 0 end) AS sent_count,
@@ -220,7 +231,13 @@ class Message < ActiveRecord::Base
     last_30_days_start = last_30_days_end - 30.days
 
     sql = %Q{
-      SELECT * FROM
+      SELECT t1.*,
+              coalesce(sent_30, 0) AS sent_30,
+              coalesce(delivered_30, 0) AS delivered_30,
+              coalesce(rejected_30, 0) AS rejected_30,
+              coalesce(bounced_30, 0) AS bounced_30,
+              coalesce(success_rate_30, 0) AS success_rate_30
+      FROM
       (
         SELECT recipient,
                SUM(case coalesce(status, '') when '' then 0 else 1 end) sent,
@@ -237,7 +254,7 @@ class Message < ActiveRecord::Base
       LEFT JOIN 
       
       (
-        SELECT recipient,
+        SELECT recipient AS recipient_30,
                SUM(case coalesce(status, '') when '' then 0 else 1 end) sent_30,
                SUM(case status when 'sent' then 1 else 0 end) AS delivered_30,
                SUM(case status when 'rejected' then 1 else 0 end) AS rejected_30,
@@ -249,7 +266,7 @@ class Message < ActiveRecord::Base
         LIMIT :limit OFFSET :offset
       ) t2 
       
-      ON t1.recipient = t2.recipient
+      ON t1.recipient = t2.recipient_30
       #{sorts_by_params(params)}
     }
 
