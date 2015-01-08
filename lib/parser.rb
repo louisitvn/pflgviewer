@@ -5,6 +5,7 @@ require 'optparse'
 require 'rubygems'
 require 'active_record'
 require 'mechanize'
+require 'rails'
 
 $options = {}
 parser = OptionParser.new("", 24) do |opts|
@@ -165,6 +166,7 @@ class PostfixLogParser
     $logger.info('-------------------------------------------')
     $logger.info('START')
     lasttime = Message.maximum(:datetime)
+
     # Check for every log file mail.log.1, mail.log.2, etc... until there is an entry that is 
     (1..100).to_a.map{|e| ".#{e}"}.insert(0, "").each do |i|
       fullpath = File.join($options[:path], $options[:name] + i.to_s)
@@ -181,12 +183,18 @@ class PostfixLogParser
 
   def self.load(fullpath, lasttime = nil)
     messages = []
-    
+    currtime = Time.now
+        
     file = File.open(fullpath, 'r')
     while !file.eof?
       line = file.readline
-
       datetime = Time.parse(line[0..14])
+      next unless datetime
+
+      # case: previous year!
+      if datetime - currtime > 2592000 # 60 * 60 * 24 * 30 ~> 30 days
+        datetime = datetime - 1.years
+      end
 
       # stop at this file if any line of the file is already imported
       return false if lasttime and datetime < lasttime
