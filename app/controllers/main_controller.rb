@@ -8,10 +8,15 @@ class MainController < ApplicationController
     @to = args[:to]
     
     # retrieving data
-    @dommain_by_deferred, count = Message.domain_by('deferred', args)
-    @dommain_by_bounced, count = Message.domain_by('bounced', args)
-    @dommain_by_sent, count = Message.domain_by('sent', args)
-    @dommain_by_rejected, count = Message.domain_by('rejected', args)
+    @dommain_by_deferred, count = Message.domain_by('deferred', args.merge(default_order: 'percentage DESC, volume DESC'))
+    @dommain_by_bounced, count = Message.domain_by('bounced', args.merge(default_order: 'percentage DESC, volume DESC'))
+    @dommain_by_sent, count = Message.domain_by('sent', args.merge(default_order: 'percentage DESC, volume DESC'))
+    @dommain_by_rejected, count = Message.domain_by('rejected', args.merge(default_order: 'percentage DESC, volume DESC'))
+
+    @dommain_by_deferred_count, count = Message.domain_by('deferred', args.merge(default_order: 'volume DESC'))
+    @dommain_by_bounced_count, count = Message.domain_by('bounced', args.merge(default_order: 'volume DESC'))
+    @dommain_by_sent_count, count = Message.domain_by('sent', args.merge(default_order: 'volume DESC'))
+    @dommain_by_rejected_count, count = Message.domain_by('rejected', args.merge(default_order: 'volume DESC'))
   end
 
   def domains_export
@@ -32,7 +37,7 @@ class MainController < ApplicationController
     respond_to do |format|
       format.html {}
       format.json {
-        data, count = Message.domain_by(params[:status], args)
+        data, count = Message.domain_by(params[:status], args.merge(default_order: 'percentage DESC, volume DESC'))
 
         render json: { data: data, recordsFiltered: count, recordsTotal: count}
       }

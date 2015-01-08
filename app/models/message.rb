@@ -124,26 +124,23 @@ class Message < ActiveRecord::Base
     # @todo Khi count phải bỏ mấy thằng null!!!!!!!!!
 
     sql = %Q{
-      SELECT t1.*, t2.volume_30, t2.percentage_30, (percentage-percentage_30) AS change FROM
+      SELECT t1.*, coalesce(t2.volume_30, 0) AS volume_30, coalesce(t2.percentage_30, 0) AS percentage_30, (percentage - percentage_30) AS change FROM
       (
-        SELECT msg.recipient_domain AS domain, count(msg.id) as volume, round(count(*)::numeric * 100 / (select count(*) FROM messages), 2) as percentage
+        SELECT msg.recipient_domain AS domain, sum(CASE COALESCE(status, '') WHEN :status THEN 1 ELSE 0 END) as volume, round(sum(CASE COALESCE(status, '') WHEN :status THEN 1 ELSE 0 END)::numeric * 100 / count(*), 2) as percentage
         FROM messages msg
-        WHERE msg.status = :status AND #{conditions_from_params(params)} 
-          AND msg.recipient_domain IS NOT NULL
+        WHERE msg.recipient_domain IS NOT NULL AND status IS NOT NULL AND #{conditions_from_params(params)}
         GROUP BY msg.recipient_domain
         LIMIT :limit OFFSET :offset
       ) t1
       LEFT JOIN
       (
-        SELECT msg.recipient_domain AS domain, count(msg.id) as volume_30, round(count(*)::numeric * 100 / (select count(*) FROM messages), 2) as percentage_30
+        SELECT msg.recipient_domain AS domain_30, sum(CASE COALESCE(status, '') WHEN :status THEN 1 ELSE 0 END) as volume_30, round(sum(CASE COALESCE(status, '') WHEN :status THEN 1 ELSE 0 END)::numeric * 100 / count(*), 2) as percentage_30
         FROM messages msg
-        WHERE msg.status = :status AND #{conditions_from_params(from: last_30_days_start, to: last_30_days_end)}
-          AND msg.recipient_domain IS NOT NULL
+        WHERE msg.recipient_domain IS NOT NULL AND status IS NOT NULL AND #{conditions_from_params(from: last_30_days_start, to: last_30_days_end)}
         GROUP BY msg.recipient_domain
-        LIMIT :limit OFFSET :offset
       ) t2
-      ON t1.domain = t2.domain
-      #{sorts_by_params(params.merge(default_order: 'volume DESC'))}
+      ON t1.domain = t2.domain_30
+      #{sorts_by_params(params)}
     }
 
     count_sql = %Q{
@@ -151,8 +148,7 @@ class Message < ActiveRecord::Base
       ( 
         SELECT msg.recipient_domain
         FROM messages msg
-        WHERE msg.status = :status AND #{conditions_from_params(params)}
-          AND msg.recipient_domain IS NOT NULL
+        WHERE msg.recipient_domain IS NOT NULL AND status IS NOT NULL AND #{conditions_from_params(params)}
         GROUP BY msg.recipient_domain
       ) tmp
     }
@@ -213,7 +209,6 @@ class Message < ActiveRecord::Base
         FROM messages 
         WHERE recipient_domain IS NOT NULL AND status IS NOT NULL AND #{conditions_from_params(from: last_30_days_start, to: last_30_days_end)}
         GROUP BY recipient_domain
-        LIMIT :limit OFFSET :offset
       ) t2 
       
       ON t1.recipient_domain = t2.recipient_domain_30
@@ -263,7 +258,6 @@ class Message < ActiveRecord::Base
         FROM messages 
         WHERE recipient_domain = :domain AND #{conditions_from_params(from: last_30_days_start, to: last_30_days_end)}
         GROUP BY recipient
-        LIMIT :limit OFFSET :offset
       ) t2 
       
       ON t1.recipient = t2.recipient_30
