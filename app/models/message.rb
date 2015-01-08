@@ -130,7 +130,6 @@ class Message < ActiveRecord::Base
         FROM messages msg
         WHERE msg.recipient_domain IS NOT NULL AND status IS NOT NULL AND #{conditions_from_params(params)}
         GROUP BY msg.recipient_domain
-        LIMIT :limit OFFSET :offset
       ) t1
       LEFT JOIN
       (
@@ -141,6 +140,7 @@ class Message < ActiveRecord::Base
       ) t2
       ON t1.domain = t2.domain_30
       #{sorts_by_params(params)}
+      LIMIT :limit OFFSET :offset
     }
 
     count_sql = %Q{
@@ -190,7 +190,6 @@ class Message < ActiveRecord::Base
         FROM messages 
         WHERE recipient_domain IS NOT NULL AND status IS NOT NULL AND #{conditions_from_params(params)}
         GROUP BY recipient_domain
-        LIMIT :limit OFFSET :offset
       ) t1 
       
       LEFT JOIN 
@@ -213,6 +212,7 @@ class Message < ActiveRecord::Base
       
       ON t1.recipient_domain = t2.recipient_domain_30
       #{sorts_by_params(params)}
+      LIMIT :limit OFFSET :offset
     }
 
     count_sql = 'SELECT COUNT(*) FROM (SELECT DISTINCT recipient_domain FROM messages) tmp'
@@ -243,7 +243,6 @@ class Message < ActiveRecord::Base
         FROM messages 
         WHERE recipient_domain = :domain AND #{conditions_from_params(params)}
         GROUP BY recipient
-        LIMIT :limit OFFSET :offset
       ) t1 
       
       LEFT JOIN 
@@ -262,6 +261,7 @@ class Message < ActiveRecord::Base
       
       ON t1.recipient = t2.recipient_30
       #{sorts_by_params(params)}
+      LIMIT :limit OFFSET :offset
     }
 
     count_sql = "SELECT COUNT(*) FROM (SELECT DISTINCT recipient FROM messages WHERE recipient_domain = :domain AND #{conditions_from_params(params)}) tmp"
