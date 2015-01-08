@@ -1,4 +1,4 @@
-    <div class="container">
+    <div class="container-fluid">
       <div style="margin:20px 0 20px">
         <div class="row">
           <div class='col-sm-3'>
@@ -128,7 +128,7 @@
               <%= link_to 'Domain by volume delivered', domains_by_status_path(:status => 'sent'), style: 'color: white' %>
             </li>
 
-            <% @dommain_by_sent.each { |r| %>
+            <% @dommain_by_sent_count.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= r.volume %></span>
                 <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
@@ -148,7 +148,7 @@
             <li class="list-group-item active">
               <%= link_to 'Domain by volume deferred', domains_by_status_path(:status => 'deferred'), style: 'color: white' %>
             </li>
-            <% @dommain_by_deferred.each { |r| %>
+            <% @dommain_by_deferred_count.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= r.volume %></span>
                 <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
@@ -168,7 +168,7 @@
             <li class="list-group-item active">
               <%= link_to 'Domain by volume bounced', domains_by_status_path(:status => 'bounced'), style: 'color: white' %>
             </li>
-            <% @dommain_by_bounced.each { |r| %>
+            <% @dommain_by_bounced_count.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= r.volume %></span>
                 <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
@@ -188,7 +188,7 @@
             <li class="list-group-item active">
               <%= link_to 'Domain by volume rejected', domains_by_status_path(:status => 'rejected'), style: 'color: white' %>
             </li>
-            <% @dommain_by_rejected.each { |r| %>
+            <% @dommain_by_rejected_count.each { |r| %>
               <li class="list-group-item">
                 <span class="badge"><%= r.volume %></span>
                 <%= link_to r.domain, users_by_domain_path(base64_domain: Base64::strict_encode64(r.domain)) %>
