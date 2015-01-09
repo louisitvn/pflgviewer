@@ -166,6 +166,7 @@ class PostfixLogParser
     $logger.info('-------------------------------------------')
     $logger.info('START')
     lasttime = Message.maximum(:datetime)
+    $logger.info("Loading entries from #{lasttime}")
 
     # Check for every log file mail.log.1, mail.log.2, etc... until there is an entry that is 
     (1..100).to_a.map{|e| ".#{e}"}.insert(0, "").each do |i|
@@ -174,8 +175,7 @@ class PostfixLogParser
 
       $logger.info "Scanning #{fullpath}"
 
-      result = load(fullpath, lasttime)
-      break if result == false # stop at this file
+      load(fullpath, lasttime)
     end
     $logger.info('DONE')
     $logger.info('-------------------------------------------')
@@ -188,7 +188,13 @@ class PostfixLogParser
     file = File.open(fullpath, 'r')
     while !file.eof?
       line = file.readline
-      datetime = Time.parse(line[0..14])
+      
+      begin
+        datetime = Time.parse(line[0..14] + " UTC")
+      rescue Exception => ex
+        next
+      end
+
       next unless datetime
 
       # case: previous year!
@@ -197,7 +203,9 @@ class PostfixLogParser
       end
 
       # stop at this file if any line of the file is already imported
-      return false if lasttime and datetime < lasttime
+      if lasttime and datetime <= lasttime
+        next
+      end
 
       msg = {}
       number = extract_id(line)
