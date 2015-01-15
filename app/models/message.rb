@@ -139,7 +139,7 @@ class Message < ActiveRecord::Base
         GROUP BY msg.recipient_domain
       ) t2
       ON t1.domain = t2.domain_30
-      #{sorts_by_params(params)}
+      #{sorts_by_params(params)}, domain
       LIMIT :limit OFFSET :offset
     }
 
@@ -211,7 +211,7 @@ class Message < ActiveRecord::Base
       ) t2 
       
       ON t1.recipient_domain = t2.recipient_domain_30
-      #{sorts_by_params(params)}
+      #{sorts_by_params(params)}, recipient_domain
       LIMIT :limit OFFSET :offset
     }
 
@@ -260,7 +260,7 @@ class Message < ActiveRecord::Base
       ) t2 
       
       ON t1.recipient = t2.recipient_30
-      #{sorts_by_params(params)}
+      #{sorts_by_params(params)}, recipient
       LIMIT :limit OFFSET :offset
     }
 
@@ -279,7 +279,7 @@ class Message < ActiveRecord::Base
         status IS NOT NULL AND
         recipient_domain = :domain AND
         #{conditions_from_params(params)}
-      #{sorts_by_params(params)}
+      #{sorts_by_params(params)}, id
       LIMIT :limit OFFSET :offset
     }
 
